@@ -1,0 +1,26 @@
+{
+  "extends": ["../.eslintrc.json", "plugin:react/recommended", "plugin:react-hooks/recommended"],
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": ".",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["react-refresh"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react-refresh/only-export-components": ["warn", { "allowConstantExport": true }],
+    "@typescript-eslint/explicit-function-return-type": "off"
+  }
+}
