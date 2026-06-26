@@ -21,6 +21,7 @@ export default {
         border: '#f3f4f6',
         surface: '#f9fafb',
         input: '#e5e7eb',
+        success: '#00bc7d',
       },
       borderRadius: {
         nav: '10px',

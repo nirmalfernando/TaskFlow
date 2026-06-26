@@ -39,3 +39,5 @@ server/prisma/migrations/*.sql.bak
 
 # Storybook
 storybook-static/
+
+*storybook.log
