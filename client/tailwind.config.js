@@ -13,6 +13,7 @@ export default {
         },
         text: {
           primary: '#101828',
+          dark: '#1e2939',
           muted: '#6a7282',
           label: '#364153',
           placeholder: '#99a1af',
