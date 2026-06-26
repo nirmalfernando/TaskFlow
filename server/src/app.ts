@@ -3,10 +3,12 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.config';
 import { generalLimiter } from './middlewares/rate-limit.middleware';
 import { errorMiddleware, notFoundMiddleware } from './middlewares/error.middleware';
 import { router } from './routes';
+import { openApiSpec } from './docs/openapi';
 
 export const createApp = (): express.Application => {
   const app = express();
@@ -30,7 +32,29 @@ export const createApp = (): express.Application => {
   }
 
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', environment: env.NODE_ENV, timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      environment: env.NODE_ENV,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.use(
+    '/api-docs',
+    ((_req: express.Request, res: express.Response, next: express.NextFunction) => {
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;",
+      );
+      next();
+    }) as express.RequestHandler,
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, { explorer: false }),
+  );
+
+  app.get('/api-docs.json', (_req, res) => {
+    res.json(openApiSpec);
   });
 
   app.use('/api/v1', router);
