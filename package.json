@@ -21,15 +21,15 @@
   },
   "lint-staged": {
     "server/src/**/*.ts": [
-      "eslint --fix --max-warnings=0",
-      "prettier --write"
+      "pnpm --filter @taskflow/server exec eslint --fix --max-warnings=0",
+      "pnpm exec prettier --write"
     ],
     "client/src/**/*.{ts,tsx}": [
-      "eslint --fix --max-warnings=0",
-      "prettier --write"
+      "pnpm --filter @taskflow/client exec eslint --fix --max-warnings=0",
+      "pnpm exec prettier --write"
     ],
     "*.{json,md,yml}": [
-      "prettier --write"
+      "pnpm exec prettier --write"
     ]
   },
   "engines": {
