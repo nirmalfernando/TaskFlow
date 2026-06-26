@@ -25,7 +25,9 @@ export const createApp = (): express.Application => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  app.use('/api', generalLimiter);
+  if (env.NODE_ENV !== 'test') {
+    app.use('/api', generalLimiter);
+  }
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', environment: env.NODE_ENV, timestamp: new Date().toISOString() });
