@@ -45,6 +45,7 @@ model User {
   firstName    String
   lastName     String
   role         Role    @default(USER)
+  isActive     Boolean @default(true)
   refreshToken String? @db.Text
 
   createdAt DateTime @default(now())
@@ -55,6 +56,7 @@ model User {
   activityLogs  ActivityLog[]
 
   @@index([email])
+  @@index([isActive])
   @@map("users")
 }
 
