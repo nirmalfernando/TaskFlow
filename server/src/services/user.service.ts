@@ -1,9 +1,14 @@
+import bcrypt from 'bcryptjs';
 import { db } from '../config/database';
 import { UserRepository } from '../repositories/user.repository';
 import { buildPaginationMeta, type PaginationMeta } from '../utils/response';
-import { NotFoundError, ForbiddenError } from '../utils/errors';
+import { NotFoundError, ForbiddenError, ConflictError } from '../utils/errors';
 import type { JwtPayload, SafeUser } from '../interfaces';
-import type { UpdateUserRoleInput, UserFiltersInput } from '../validators/user.validator';
+import type {
+  UpdateUserRoleInput,
+  UserFiltersInput,
+  InviteUserInput,
+} from '../validators/user.validator';
 
 const userRepo = new UserRepository(db);
 
@@ -16,16 +21,18 @@ function toSafeUser(user: {
   lastName: string;
   role: string;
   isActive: boolean;
+  avatarUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): SafeUser & { isActive: boolean } {
-  const { id, email, firstName, lastName, role, isActive, createdAt, updatedAt } = user;
+  const { id, email, firstName, lastName, role, isActive, avatarUrl, createdAt, updatedAt } = user;
   return {
     id,
     email,
     firstName,
     lastName,
     role: role as SafeUser['role'],
+    avatarUrl: avatarUrl ?? null,
     isActive,
     createdAt,
     updatedAt,
@@ -92,4 +99,19 @@ export async function reactivateUser(id: string, actor: JwtPayload): Promise<voi
   if (user.isActive) throw new ForbiddenError('User is already active');
 
   await userRepo.update(id, { isActive: true });
+}
+
+export async function inviteUser(input: InviteUserInput): Promise<ReturnType<typeof toSafeUser>> {
+  const existing = await userRepo.findByEmail(input.email);
+  if (existing) throw new ConflictError('A user with this email already exists');
+
+  const hashedPassword = await bcrypt.hash(input.temporaryPassword, 12);
+  const user = await userRepo.create({
+    email: input.email,
+    password: hashedPassword,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    role: input.role,
+  });
+  return toSafeUser(user);
 }

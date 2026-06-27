@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { BaseController } from './base.controller';
 import * as UserService from '../services/user.service';
-import type { UpdateUserRoleInput } from '../validators/user.validator';
+import type { UpdateUserRoleInput, InviteUserInput } from '../validators/user.validator';
 
 class UserController extends BaseController {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -48,6 +48,15 @@ class UserController extends BaseController {
     try {
       await UserService.reactivateUser(req.params.id, req.user!);
       this.noContent(res);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async invite(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = await UserService.inviteUser(req.body as InviteUserInput);
+      this.created(res, user, 'User invited successfully');
     } catch (err) {
       next(err);
     }

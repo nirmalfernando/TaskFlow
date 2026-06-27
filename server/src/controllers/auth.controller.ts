@@ -1,7 +1,15 @@
 import type { Request, Response, NextFunction } from 'express';
 import { BaseController } from './base.controller';
 import * as AuthService from '../services/auth.service';
-import type { RegisterInput, LoginInput, RefreshTokenInput } from '../validators/auth.validator';
+import * as UploadService from '../services/upload.service';
+import type {
+  RegisterInput,
+  LoginInput,
+  RefreshTokenInput,
+  UpdateProfileInput,
+  ChangePasswordInput,
+} from '../validators/auth.validator';
+import { BadRequestError } from '../utils/errors';
 
 class AuthController extends BaseController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -45,6 +53,41 @@ class AuthController extends BaseController {
     try {
       const user = await AuthService.getCurrentUser(req.user!.userId);
       this.ok(res, user);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = await AuthService.updateProfile(
+        req.user!.userId,
+        req.body as UpdateProfileInput,
+      );
+      this.ok(res, user, 'Profile updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async uploadAvatar(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.file) throw new BadRequestError('No file uploaded');
+      const avatarUrl = await UploadService.uploadAvatarToCloudinary(
+        req.file.buffer,
+        req.user!.userId,
+      );
+      const user = await AuthService.updateAvatar(req.user!.userId, avatarUrl);
+      this.ok(res, user, 'Avatar updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await AuthService.changePassword(req.user!.userId, req.body as ChangePasswordInput);
+      this.ok(res, null, 'Password changed successfully');
     } catch (err) {
       next(err);
     }

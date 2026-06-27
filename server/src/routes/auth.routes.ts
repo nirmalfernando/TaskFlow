@@ -2,7 +2,14 @@ import { Router, type IRouter } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
-import { registerSchema, loginSchema, refreshTokenSchema } from '../validators/auth.validator';
+import { uploadAvatar } from '../middlewares/upload.middleware';
+import {
+  registerSchema,
+  loginSchema,
+  refreshTokenSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+} from '../validators/auth.validator';
 
 export const authRouter: IRouter = Router();
 
@@ -25,3 +32,20 @@ authRouter.post('/logout', authenticate, (req, res, next) => {
 authRouter.get('/me', authenticate, (req, res, next) => {
   authController.me(req, res, next).catch(next);
 });
+
+authRouter.patch('/profile', authenticate, validate(updateProfileSchema), (req, res, next) => {
+  authController.updateProfile(req, res, next).catch(next);
+});
+
+authRouter.post('/avatar', authenticate, uploadAvatar, (req, res, next) => {
+  authController.uploadAvatar(req, res, next).catch(next);
+});
+
+authRouter.post(
+  '/change-password',
+  authenticate,
+  validate(changePasswordSchema),
+  (req, res, next) => {
+    authController.changePassword(req, res, next).catch(next);
+  },
+);

@@ -9,6 +9,9 @@ interface AuthContextValue {
   login: (input: authService.LoginInput) => Promise<void>;
   register: (input: authService.RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (input: authService.UpdateProfileInput) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  changePassword: (input: authService.ChangePasswordInput) => Promise<void>;
 }
 
 const USER_KEY = 'taskflow_user';
@@ -25,18 +28,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  function persistUser(u: User) {
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
+    setUser(u);
+  }
+
   async function login(input: authService.LoginInput) {
     const { user: u, tokens } = await authService.login(input);
     tokenStorage.set(tokens);
-    localStorage.setItem(USER_KEY, JSON.stringify(u));
-    setUser(u);
+    persistUser(u);
   }
 
   async function register(input: authService.RegisterInput) {
     const { user: u, tokens } = await authService.register(input);
     tokenStorage.set(tokens);
-    localStorage.setItem(USER_KEY, JSON.stringify(u));
-    setUser(u);
+    persistUser(u);
   }
 
   async function logout() {
@@ -49,8 +55,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function updateProfile(input: authService.UpdateProfileInput) {
+    const updated = await authService.updateProfile(input);
+    persistUser(updated);
+  }
+
+  async function uploadAvatar(file: File) {
+    const updated = await authService.uploadAvatar(file);
+    persistUser(updated);
+  }
+
+  async function changePassword(input: authService.ChangePasswordInput) {
+    await authService.changePassword(input);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: user !== null,
+        login,
+        register,
+        logout,
+        updateProfile,
+        uploadAvatar,
+        changePassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

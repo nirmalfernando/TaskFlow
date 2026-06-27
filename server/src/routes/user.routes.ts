@@ -2,7 +2,11 @@ import { Router, type IRouter } from 'express';
 import { userController } from '../controllers/user.controller';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
-import { updateUserRoleSchema, userFiltersSchema } from '../validators/user.validator';
+import {
+  updateUserRoleSchema,
+  userFiltersSchema,
+  inviteUserSchema,
+} from '../validators/user.validator';
 
 export const userRouter: IRouter = Router();
 
@@ -26,4 +30,8 @@ userRouter.patch('/:id/deactivate', (req, res, next) => {
 
 userRouter.patch('/:id/reactivate', (req, res, next) => {
   userController.reactivate(req, res, next).catch(next);
+});
+
+userRouter.post('/invite', validate(inviteUserSchema), (req, res, next) => {
+  userController.invite(req, res, next).catch(next);
 });

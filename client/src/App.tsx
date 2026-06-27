@@ -7,6 +7,7 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { TasksPage } from '@/pages/TasksPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 
 export function App() {
   return (
@@ -20,6 +21,7 @@ export function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/users" element={<AdminUsersPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
 
