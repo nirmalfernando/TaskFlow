@@ -53,6 +53,15 @@ class UserController extends BaseController {
     }
   }
 
+  async listAssignable(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const users = await UserService.getAssignableUsers();
+      this.ok(res, users);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async invite(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = await UserService.inviteUser(req.body as InviteUserInput);

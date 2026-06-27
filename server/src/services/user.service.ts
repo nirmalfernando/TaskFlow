@@ -101,6 +101,12 @@ export async function reactivateUser(id: string, actor: JwtPayload): Promise<voi
   await userRepo.update(id, { isActive: true });
 }
 
+export async function getAssignableUsers(): Promise<
+  Pick<ReturnType<typeof toSafeUser>, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>[]
+> {
+  return userRepo.findAssignable();
+}
+
 export async function inviteUser(input: InviteUserInput): Promise<ReturnType<typeof toSafeUser>> {
   const existing = await userRepo.findByEmail(input.email);
   if (existing) throw new ConflictError('A user with this email already exists');

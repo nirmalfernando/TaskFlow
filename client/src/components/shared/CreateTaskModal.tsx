@@ -1,9 +1,37 @@
-import { useState } from 'react';
-import { X, Plus, Mic, Sparkles, Check, ArrowRight, Loader2, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Plus,
+  Mic,
+  Sparkles,
+  Check,
+  ArrowRight,
+  Loader2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  User,
+} from 'lucide-react';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+  isToday,
+} from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PriorityBadge, type Priority } from './PriorityBadge';
 import { StatusBadge, type TaskStatus } from './StatusBadge';
-import type { CreateTaskPayload, TaskStatusBackend, PriorityBackend } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import * as userService from '@/services/user.service';
+import type { CreateTaskPayload, TaskStatusBackend, PriorityBackend, TaskUser } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,9 +72,304 @@ function toBackendPriority(p: Priority): PriorityBackend {
   return map[p];
 }
 
+// ─── DatePickerPopover ────────────────────────────────────────────────────────
+
+interface DatePickerProps {
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+}
+
+function DatePickerPopover({ value, onChange }: DatePickerProps) {
+  const [open, setOpen] = useState(false);
+  const [viewMonth, setViewMonth] = useState(value ?? new Date());
+  const [pending, setPending] = useState<Date | null>(value);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(viewMonth);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: calStart, end: calEnd });
+
+  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  function handleOpen() {
+    setPending(value);
+    setViewMonth(value ?? new Date());
+    setOpen(true);
+  }
+
+  function handleApply() {
+    onChange(pending);
+    setOpen(false);
+  }
+
+  function handleCancel() {
+    setPending(value);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={handleOpen}
+        className={cn(
+          'flex h-11 w-full items-center gap-2 rounded-input border bg-white px-3.5 text-sm outline-none transition-colors',
+          open
+            ? 'border-primary ring-2 ring-primary/20'
+            : 'border-input text-text-primary hover:border-primary/50',
+          !value && 'text-text-placeholder',
+        )}
+      >
+        <Calendar className="h-4 w-4 flex-shrink-0 text-text-placeholder" />
+        <span className="flex-1 text-left">
+          {value ? format(value, 'MMM d, yyyy') : 'Pick a date'}
+        </span>
+        {value && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(null);
+            }}
+            className="text-text-placeholder hover:text-text-muted transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-[280px] rounded-[14px] border border-border bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
+          {/* Month nav */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setViewMonth((m) => subMonths(m, 1))}
+              className="flex h-7 w-7 items-center justify-center rounded-nav text-text-muted transition-colors hover:bg-surface"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-sm font-semibold text-primary">
+              {format(viewMonth, 'MMMM yyyy')}
+            </span>
+            <button
+              type="button"
+              onClick={() => setViewMonth((m) => addMonths(m, 1))}
+              className="flex h-7 w-7 items-center justify-center rounded-nav text-text-muted transition-colors hover:bg-surface"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Day-of-week headers */}
+          <div className="grid grid-cols-7 px-3 pb-1">
+            {DAY_LABELS.map((d) => (
+              <div
+                key={d}
+                className="py-1 text-center text-[11px] font-medium text-text-placeholder"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7 gap-y-0.5 px-3 pb-3">
+            {days.map((day) => {
+              const inMonth = isSameMonth(day, viewMonth);
+              const selected = pending ? isSameDay(day, pending) : false;
+              const todayDay = isToday(day);
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => setPending(day)}
+                  className={cn(
+                    'flex h-8 w-full items-center justify-center rounded-nav text-sm transition-colors',
+                    selected && 'bg-primary text-white font-semibold',
+                    !selected && todayDay && inMonth && 'text-primary font-semibold',
+                    !selected && inMonth && !todayDay && 'text-text-primary hover:bg-primary-light',
+                    !selected && !inMonth && 'text-text-placeholder hover:bg-surface',
+                  )}
+                >
+                  {format(day, 'd')}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="h-8 rounded-nav border border-input px-4 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApply}
+              className="h-8 rounded-nav bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AssigneeSelect ───────────────────────────────────────────────────────────
+
+interface AssigneeSelectProps {
+  users: TaskUser[];
+  value: string | null;
+  onChange: (id: string | null) => void;
+  currentUserId: string;
+  loading: boolean;
+}
+
+function AssigneeSelect({ users, value, onChange, currentUserId, loading }: AssigneeSelectProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selected = users.find((u) => u.id === value) ?? null;
+
+  function getInitials(u: TaskUser) {
+    return `${u.firstName[0]}${u.lastName[0]}`.toUpperCase();
+  }
+
+  function getDisplayLabel(u: TaskUser) {
+    return u.id === currentUserId
+      ? `${u.firstName} ${u.lastName} (You)`
+      : `${u.firstName} ${u.lastName}`;
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'flex h-11 w-full items-center gap-2 rounded-input border bg-white px-3.5 text-sm outline-none transition-colors',
+          open
+            ? 'border-primary ring-2 ring-primary/20'
+            : 'border-input text-text-primary hover:border-primary/50',
+          !selected && 'text-text-placeholder',
+        )}
+      >
+        {selected ? (
+          selected.avatarUrl ? (
+            <img
+              src={selected.avatarUrl}
+              alt=""
+              className="h-5 w-5 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-[10px] font-semibold text-primary">
+              {getInitials(selected)}
+            </div>
+          )
+        ) : (
+          <User className="h-4 w-4 flex-shrink-0 text-text-placeholder" />
+        )}
+        <span className="flex-1 truncate text-left">
+          {loading ? 'Loading…' : selected ? getDisplayLabel(selected) : 'Unassigned'}
+        </span>
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 flex-shrink-0 text-text-placeholder transition-transform',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-full rounded-[12px] border border-border bg-white py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
+          {/* Unassigned option */}
+          <button
+            type="button"
+            onClick={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            className={cn(
+              'flex w-full items-center gap-2.5 px-3.5 py-2 text-sm transition-colors hover:bg-surface',
+              !value && 'bg-primary-light',
+            )}
+          >
+            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-dashed border-input">
+              <User className="h-3.5 w-3.5 text-text-placeholder" />
+            </div>
+            <span className="text-text-muted">Unassigned</span>
+            {!value && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
+          </button>
+
+          {users.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => {
+                onChange(u.id);
+                setOpen(false);
+              }}
+              className={cn(
+                'flex w-full items-center gap-2.5 px-3.5 py-2 text-sm transition-colors hover:bg-surface',
+                value === u.id && 'bg-primary-light',
+              )}
+            >
+              {u.avatarUrl ? (
+                <img
+                  src={u.avatarUrl}
+                  alt=""
+                  className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-[10px] font-semibold text-primary">
+                  {getInitials(u)}
+                </div>
+              )}
+              <span className="truncate text-text-primary">{getDisplayLabel(u)}</span>
+              {value === u.id && (
+                <Check className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── CreateTaskModal ──────────────────────────────────────────────────────────
 
 export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModalProps) {
+  const { user: currentUser } = useAuth();
+
   const [aiState, setAiState] = useState<AiState>('idle');
   const [aiInput, setAiInput] = useState('');
   const [parsedTask, setParsedTask] = useState<ParsedTask | null>(null);
@@ -55,10 +378,24 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<TaskStatus>('open');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+
+  const [users, setUsers] = useState<TaskUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setUsersLoading(true);
+    userService
+      .getAssignableUsers()
+      .then(setUsers)
+      .catch(() => {})
+      .finally(() => setUsersLoading(false));
+  }, [open]);
 
   if (!open) return null;
 
@@ -105,7 +442,8 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
         ...(description.trim() ? { description: description.trim() } : {}),
         status: toBackendStatus(status),
         priority: toBackendPriority(priority),
-        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+        ...(dueDate ? { dueDate: dueDate.toISOString() } : {}),
+        ...(assigneeId ? { assignedToId: assigneeId } : {}),
       };
       await onCreateTask?.(payload);
       handleClose();
@@ -124,7 +462,8 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
     setDescription('');
     setPriority('medium');
     setStatus('open');
-    setDueDate('');
+    setDueDate(null);
+    setAssigneeId(null);
     setError('');
     onClose();
   };
@@ -278,8 +617,8 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
             />
           </div>
 
-          {/* Priority / Status / Due Date row */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Priority / Status row */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-text-label" htmlFor="task-priority">
                 Priority
@@ -318,18 +657,24 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
               </div>
             </div>
+          </div>
+
+          {/* Assignee / Due Date row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-label">Assignee</label>
+              <AssigneeSelect
+                users={users}
+                value={assigneeId}
+                onChange={setAssigneeId}
+                currentUserId={currentUser?.id ?? ''}
+                loading={usersLoading}
+              />
+            </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-label" htmlFor="task-due">
-                Due Date
-              </label>
-              <input
-                id="task-due"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="h-11 w-full rounded-input border border-input bg-white px-3.5 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
+              <label className="text-sm font-medium text-text-label">Due Date</label>
+              <DatePickerPopover value={dueDate} onChange={setDueDate} />
             </div>
           </div>
 

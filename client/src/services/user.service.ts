@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { ApiResponse, Role, User } from '@/types';
+import type { ApiResponse, Role, User, TaskUser } from '@/types';
 
 export interface AdminUser extends User {
   isActive: boolean;
@@ -29,6 +29,11 @@ export interface InviteUserInput {
   lastName: string;
   role: Role;
   temporaryPassword: string;
+}
+
+export async function getAssignableUsers(): Promise<TaskUser[]> {
+  const { data } = await api.get<ApiResponse<TaskUser[]>>('/users/assignable');
+  return data.data;
 }
 
 export async function getUsers(filters?: UserFilters): Promise<PaginatedUsers> {

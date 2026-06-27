@@ -10,6 +10,12 @@ import {
 
 export const userRouter: IRouter = Router();
 
+// Authenticated (non-admin) routes
+userRouter.get('/assignable', authenticate, (req, res, next) => {
+  userController.listAssignable(req, res, next).catch(next);
+});
+
+// Admin-only routes
 userRouter.use(authenticate, authorize('ADMIN'));
 
 userRouter.get('/', validate(userFiltersSchema, 'query'), (req, res, next) => {

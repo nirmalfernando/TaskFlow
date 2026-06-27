@@ -72,4 +72,12 @@ export class UserRepository extends BaseRepository<User> {
   async findAllUsers(page: number, limit: number): Promise<[User[], number]> {
     return this.findFiltered({ page, limit });
   }
+
+  async findAssignable(): Promise<Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>[]> {
+    return this.db.user.findMany({
+      where: { isActive: true },
+      select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+    });
+  }
 }
