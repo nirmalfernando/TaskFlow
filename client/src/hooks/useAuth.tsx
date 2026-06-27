@@ -1,44 +1,56 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'member';
-  avatarSrc?: string;
-}
+import type { User } from '@/types';
+import { tokenStorage } from '@/services/api';
+import * as authService from '@/services/auth.service';
 
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
-  login: (user: User) => void;
-  logout: () => void;
+  login: (input: authService.LoginInput) => Promise<void>;
+  register: (input: authService.RegisterInput) => Promise<void>;
+  logout: () => Promise<void>;
 }
+
+const USER_KEY = 'taskflow_user';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const stored = localStorage.getItem('taskflow_user');
+      const stored = localStorage.getItem(USER_KEY);
       return stored ? (JSON.parse(stored) as User) : null;
     } catch {
       return null;
     }
   });
 
-  function login(u: User) {
+  async function login(input: authService.LoginInput) {
+    const { user: u, tokens } = await authService.login(input);
+    tokenStorage.set(tokens);
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
     setUser(u);
-    localStorage.setItem('taskflow_user', JSON.stringify(u));
   }
 
-  function logout() {
-    setUser(null);
-    localStorage.removeItem('taskflow_user');
+  async function register(input: authService.RegisterInput) {
+    const { user: u, tokens } = await authService.register(input);
+    tokenStorage.set(tokens);
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
+    setUser(u);
+  }
+
+  async function logout() {
+    try {
+      await authService.logout();
+    } finally {
+      tokenStorage.clear();
+      localStorage.removeItem(USER_KEY);
+      setUser(null);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: user !== null, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

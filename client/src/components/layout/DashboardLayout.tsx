@@ -31,11 +31,13 @@ export function DashboardLayout() {
       <Sidebar
         activeNav={activeNav}
         onNavChange={handleNavChange}
-        user={user ? { name: user.name, role: user.role, avatarSrc: user.avatarSrc } : undefined}
-        onLogout={logout}
+        user={user ? { name: `${user.firstName} ${user.lastName}`, role: user.role } : undefined}
+        onLogout={() => {
+          void logout();
+        }}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar user={user ? { name: user.name, avatarSrc: user.avatarSrc } : { name: '' }} />
+        <TopBar user={user ? { name: `${user.firstName} ${user.lastName}` } : { name: '' }} />
         <main className="flex-1 overflow-y-auto p-8">
           <Outlet />
         </main>

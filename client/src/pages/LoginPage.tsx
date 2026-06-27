@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,6 +21,7 @@ type FormData = z.infer<typeof schema>;
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -29,9 +31,18 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const onSubmit = (data: FormData) => {
-    login({ id: '1', name: data.email.split('@')[0], email: data.email, role: 'member' });
-    navigate('/dashboard');
+  const onSubmit = async (data: FormData) => {
+    setServerError('');
+    try {
+      await login(data);
+      navigate('/dashboard');
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setServerError((err.response?.data as { message?: string })?.message ?? 'Login failed');
+      } else {
+        setServerError('Something went wrong. Please try again.');
+      }
+    }
   };
 
   return (
@@ -62,6 +73,11 @@ export function LoginPage() {
         {/* Form */}
         {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          {serverError && (
+            <p className="rounded-input bg-red-50 border border-red-200 px-3.5 py-2.5 text-sm text-red-600">
+              {serverError}
+            </p>
+          )}
           {/* Email */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-label" htmlFor="email">

@@ -4,19 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
 const schema = z
   .object({
-    name: z.string().min(2, 'Full name must be at least 2 characters'),
+    firstName: z.string().min(1, 'First name is required').max(50),
+    lastName: z.string().min(1, 'Last name is required').max(50),
     email: z.string().email('Invalid email address'),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/[A-Z]/, 'Must contain an uppercase letter')
-      .regex(/[0-9]/, 'Must contain a number')
-      .regex(/[^A-Za-z0-9]/, 'Must contain a symbol'),
+      .regex(/[a-z]/, 'Must contain a lowercase letter')
+      .regex(/[0-9]/, 'Must contain a number'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -71,7 +73,8 @@ function PasswordField({
 }
 
 export function RegisterPage() {
-  const { login } = useAuth();
+  const [serverError, setServerError] = useState('');
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -80,9 +83,25 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const onSubmit = (data: FormData) => {
-    login({ id: '1', name: data.name, email: data.email, role: 'member' });
-    navigate('/dashboard');
+  const onSubmit = async (data: FormData) => {
+    setServerError('');
+    try {
+      await registerUser({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+      });
+      navigate('/dashboard');
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setServerError(
+          (err.response?.data as { message?: string })?.message ?? 'Registration failed',
+        );
+      } else {
+        setServerError('Something went wrong. Please try again.');
+      }
+    }
   };
 
   return (
@@ -115,24 +134,53 @@ export function RegisterPage() {
         {/* Form */}
         {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
-          {/* Full Name */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-label" htmlFor="name">
-              Full Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              autoComplete="name"
-              {...register('name')}
-              className={cn(
-                'h-11 w-full rounded-input border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
-                'focus:border-primary focus:ring-2 focus:ring-primary/20',
-                errors.name ? 'border-red-400' : 'border-input',
+          {serverError && (
+            <p className="rounded-input bg-red-50 border border-red-200 px-3.5 py-2.5 text-sm text-red-600">
+              {serverError}
+            </p>
+          )}
+
+          {/* Name row */}
+          <div className="flex gap-3">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-sm font-medium text-text-label" htmlFor="firstName">
+                First Name
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                placeholder="John"
+                autoComplete="given-name"
+                {...register('firstName')}
+                className={cn(
+                  'h-11 w-full rounded-input border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
+                  'focus:border-primary focus:ring-2 focus:ring-primary/20',
+                  errors.firstName ? 'border-red-400' : 'border-input',
+                )}
+              />
+              {errors.firstName && (
+                <p className="text-xs text-red-500">{errors.firstName.message}</p>
               )}
-            />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-sm font-medium text-text-label" htmlFor="lastName">
+                Last Name
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                placeholder="Doe"
+                autoComplete="family-name"
+                {...register('lastName')}
+                className={cn(
+                  'h-11 w-full rounded-input border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
+                  'focus:border-primary focus:ring-2 focus:ring-primary/20',
+                  errors.lastName ? 'border-red-400' : 'border-input',
+                )}
+              />
+              {errors.lastName && <p className="text-xs text-red-500">{errors.lastName.message}</p>}
+            </div>
           </div>
 
           {/* Email */}
@@ -162,7 +210,7 @@ export function RegisterPage() {
             </label>
             <PasswordField
               id="password"
-              placeholder="Min. 8 chars, uppercase, number, symbol"
+              placeholder="Min. 8 chars, uppercase, number"
               autoComplete="new-password"
               registration={register('password')}
               error={errors.password?.message}
