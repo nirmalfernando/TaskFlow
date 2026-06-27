@@ -33,7 +33,7 @@ export function DashboardLayout() {
         onNavChange={handleNavChange}
         user={user ? { name: `${user.firstName} ${user.lastName}`, role: user.role } : undefined}
         onLogout={() => {
-          void logout();
+          void logout().then(() => navigate('/login', { replace: true }));
         }}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
