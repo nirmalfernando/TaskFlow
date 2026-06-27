@@ -67,7 +67,7 @@ export function DashboardLayout() {
           user={{ name: fullName, avatarSrc: user?.avatarUrl ?? undefined }}
           onProfileClick={() => navigate('/settings')}
         />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-8">
           <Outlet />
         </main>
       </div>
