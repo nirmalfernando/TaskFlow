@@ -7,6 +7,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
+const FEATURE_FLAGS = {
+  googleSso: false,
+} as const;
+
 const schema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -134,25 +138,29 @@ export function LoginPage() {
           </Link>
         </p>
 
-        {/* Divider */}
-        <div className="mt-5 flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs font-medium text-text-placeholder">or</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
+        {FEATURE_FLAGS.googleSso && (
+          <>
+            {/* Divider */}
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs font-medium text-text-placeholder">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
 
-        {/* Google SSO */}
-        <button
-          type="button"
-          className="mt-3 flex h-11 w-full items-center justify-center gap-2.5 rounded-input border border-input text-sm font-medium text-text-secondary hover:bg-surface transition-colors"
-        >
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google"
-            className="h-[18px] w-[18px]"
-          />
-          Continue with Google
-        </button>
+            {/* Google SSO */}
+            <button
+              type="button"
+              className="mt-3 flex h-11 w-full items-center justify-center gap-2.5 rounded-input border border-input text-sm font-medium text-text-secondary hover:bg-surface transition-colors"
+            >
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="Google"
+                className="h-[18px] w-[18px]"
+              />
+              Continue with Google
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
