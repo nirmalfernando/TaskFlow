@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PriorityBadge, type Priority } from './PriorityBadge';
@@ -58,10 +59,45 @@ export function KanbanCard({
   onClick,
   className,
 }: KanbanCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    const card = cardRef.current;
+    if (card) {
+      // Build a clone that already has the DragHandle visible so the ghost shows it
+      const clone = card.cloneNode(true) as HTMLElement;
+      const handle = document.createElement('div');
+      handle.className = 'flex items-center gap-1.5 mb-2.5';
+      handle.innerHTML = `<div class="flex gap-0.5">${Array.from({ length: 6 })
+        .map(() => '<span class="h-1 w-1 rounded-full bg-[#8ec5ff]"></span>')
+        .join(
+          '',
+        )}</div><span class="text-[10px] font-semibold uppercase tracking-wide text-[#51a2ff]">Dragging</span>`;
+      clone.insertBefore(handle, clone.firstChild);
+      Object.assign(clone.style, {
+        position: 'fixed',
+        top: '-9999px',
+        left: '-9999px',
+        width: `${card.offsetWidth}px`,
+        pointerEvents: 'none',
+        border: '1px solid #bedbff',
+        boxShadow: '0px 0px 0px 2px rgba(190,219,255,0.5), 0px 20px 48px 0px rgba(0,0,0,0.2)',
+        borderRadius: '12px',
+        background: 'white',
+        padding: '17px',
+      });
+      document.body.appendChild(clone);
+      e.dataTransfer.setDragImage(clone, card.offsetWidth / 2, 28);
+      requestAnimationFrame(() => document.body.removeChild(clone));
+    }
+    onDragStart?.(e);
+  };
+
   return (
     <div
+      ref={cardRef}
       draggable
-      onDragStart={onDragStart}
+      onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(

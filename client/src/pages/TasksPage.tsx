@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import {
   Search,
   ChevronDown,
@@ -239,14 +239,32 @@ const KANBAN_COLUMNS: {
   },
 ];
 
-function DropZone({ isActive }: { isActive: boolean }) {
+// A thin horizontal line that appears at the exact insertion point between cards
+function DropLine({ active }: { active: boolean }) {
+  return (
+    <div
+      className={cn(
+        'relative mx-0.5 transition-all duration-150',
+        active ? 'my-1 h-0.5' : 'my-0 h-0',
+      )}
+    >
+      {active && (
+        <>
+          <div className="absolute inset-0 rounded-full bg-primary" />
+          <div className="absolute -left-0.5 -top-[3px] h-2 w-2 rounded-full border-2 border-primary bg-white" />
+        </>
+      )}
+    </div>
+  );
+}
+
+// Empty-column drop target
+function EmptyDropZone({ isActive }: { isActive: boolean }) {
   return (
     <div
       className={cn(
         'flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-2 border-dashed py-5 transition-all duration-200',
-        isActive
-          ? 'border-primary/50 bg-primary/5 scale-[1.01]'
-          : 'border-border/70 bg-transparent',
+        isActive ? 'border-primary/50 bg-primary/5' : 'border-border/60 bg-transparent',
       )}
     >
       <div
@@ -278,25 +296,30 @@ function KanbanBoard({
 }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
+  // Which gap index within the active column the cursor is currently over
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const dragEnterCounters = useRef<Partial<Record<TaskStatus, number>>>({});
 
   const handleDragStart = (taskId: string) => (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', taskId);
-    // Delay so the browser captures the ghost before isDragging styles apply
     requestAnimationFrame(() => setDraggingId(taskId));
   };
 
   const handleDragEnd = () => {
     setDraggingId(null);
     setDragOverColumn(null);
+    setDropIndex(null);
     dragEnterCounters.current = {};
   };
 
   const handleDragEnter = (status: TaskStatus) => (e: React.DragEvent) => {
     e.preventDefault();
     dragEnterCounters.current[status] = (dragEnterCounters.current[status] ?? 0) + 1;
-    setDragOverColumn(status);
+    if (dragOverColumn !== status) {
+      setDragOverColumn(status);
+      setDropIndex(null);
+    }
   };
 
   const handleDragLeave = (status: TaskStatus) => () => {
@@ -304,6 +327,7 @@ function KanbanBoard({
     if ((dragEnterCounters.current[status] ?? 0) <= 0) {
       dragEnterCounters.current[status] = 0;
       setDragOverColumn((prev) => (prev === status ? null : prev));
+      setDropIndex(null);
     }
   };
 
@@ -312,12 +336,24 @@ function KanbanBoard({
     e.dataTransfer.dropEffect = 'move';
   };
 
+  // Per-card drag-over: figure out if cursor is in the top or bottom half
+  const handleCardDragOver = (e: React.DragEvent, column: TaskStatus, cardIndex: number) => {
+    e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const index = e.clientY < rect.top + rect.height / 2 ? cardIndex : cardIndex + 1;
+    if (dragOverColumn !== column || dropIndex !== index) {
+      setDragOverColumn(column);
+      setDropIndex(index);
+    }
+  };
+
   const handleDrop = (status: TaskStatus) => (e: React.DragEvent) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('text/plain');
     if (taskId) onStatusChange(taskId, status);
     setDraggingId(null);
     setDragOverColumn(null);
+    setDropIndex(null);
     dragEnterCounters.current = {};
   };
 
@@ -364,31 +400,41 @@ function KanbanBoard({
                 </span>
               </div>
 
-              {/* Drop zone — visible whenever a drag is in progress */}
-              {isDragging && (
-                <div className="mb-2">
-                  <DropZone isActive={isDropTarget} />
-                </div>
-              )}
+              {/* Cards with per-gap drop indicators */}
+              <div className="flex flex-col">
+                {colTasks.length === 0 && isDragging ? (
+                  <EmptyDropZone isActive={isDropTarget} />
+                ) : (
+                  <>
+                    {/* Gap before the first card */}
+                    {isDragging && <DropLine active={isDropTarget && dropIndex === 0} />}
 
-              {/* Cards */}
-              <div className="flex flex-col gap-2">
-                {colTasks.map((task) => (
-                  <KanbanCard
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    description={task.description}
-                    priority={task.priority}
-                    status={task.status}
-                    assignee={task.assignee}
-                    dueDate={task.dueDate}
-                    isOverdue={task.isOverdue}
-                    isDragging={draggingId === task.id}
-                    onDragStart={handleDragStart(task.id)}
-                    onDragEnd={handleDragEnd}
-                  />
-                ))}
+                    {colTasks.map((task, i) => (
+                      <Fragment key={task.id}>
+                        <div
+                          onDragOver={(e) => handleCardDragOver(e, col.status, i)}
+                          className="mb-2"
+                        >
+                          <KanbanCard
+                            id={task.id}
+                            title={task.title}
+                            description={task.description}
+                            priority={task.priority}
+                            status={task.status}
+                            assignee={task.assignee}
+                            dueDate={task.dueDate}
+                            isOverdue={task.isOverdue}
+                            isDragging={draggingId === task.id}
+                            onDragStart={handleDragStart(task.id)}
+                            onDragEnd={handleDragEnd}
+                          />
+                        </div>
+                        {/* Gap after this card */}
+                        {isDragging && <DropLine active={isDropTarget && dropIndex === i + 1} />}
+                      </Fragment>
+                    ))}
+                  </>
+                )}
               </div>
 
               {/* Add card button */}
