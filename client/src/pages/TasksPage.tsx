@@ -1,5 +1,5 @@
-import { useState, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, Fragment, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   ChevronDown,
@@ -433,13 +433,21 @@ const PAGE_SIZE = 8;
 
 export function TasksPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatusBackend | ''>('');
   const [priorityFilter, setPriorityFilter] = useState<PriorityBackend | ''>('');
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(() => searchParams.get('new') === '1');
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowModal(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Simple debounce for search
   const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);

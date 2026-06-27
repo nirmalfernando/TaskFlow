@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layers, Clock, Timer, CheckCircle2, MoreHorizontal, Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '@/components/shared/StatCard';
@@ -200,6 +201,7 @@ function TasksByStatusCard({ tasks }: { tasks: Task[] }) {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const firstName = user?.firstName ?? 'there';
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -232,6 +234,7 @@ export function DashboardPage() {
         </div>
         <button
           type="button"
+          onClick={() => navigate('/tasks?new=1')}
           className="flex h-9 items-center gap-2 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
