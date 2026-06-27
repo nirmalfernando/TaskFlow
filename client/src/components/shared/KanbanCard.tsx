@@ -12,7 +12,7 @@ export interface KanbanCardData {
   description?: string;
   priority: Priority;
   status: TaskStatus;
-  assignee: { name: string; avatarSrc?: string };
+  assignee: { name: string; avatarSrc?: string } | null;
   dueDate: string;
   isOverdue?: boolean;
 }
@@ -102,13 +102,17 @@ export function KanbanCard({
         <div
           className={cn(
             'flex items-center gap-1.5 text-xs font-medium',
-            isOverdue ? 'text-orange-500' : 'text-text-placeholder',
+            isOverdue ? 'text-red-500' : 'text-text-placeholder',
           )}
         >
           <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
           {dueDate}
         </div>
-        <UserAvatar name={assignee.name} src={assignee.avatarSrc} size="sm" />
+        {assignee ? (
+          <UserAvatar name={assignee.name} src={assignee.avatarSrc} size="sm" />
+        ) : (
+          <span className="h-[26px] w-[26px] rounded-full border border-dashed border-border" />
+        )}
       </div>
     </div>
   );

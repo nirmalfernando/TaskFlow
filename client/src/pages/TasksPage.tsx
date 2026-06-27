@@ -13,6 +13,7 @@ import {
 import { PriorityBadge, type Priority } from '@/components/shared/PriorityBadge';
 import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
+import { KanbanCard } from '@/components/shared/KanbanCard';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils';
 interface Task {
   id: string;
   title: string;
+  description?: string;
   priority: Priority;
   status: TaskStatus;
   assignee: { name: string } | null;
@@ -33,6 +35,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1042',
     title: 'Redesign onboarding flow for new users',
+    description:
+      'Overhaul the first-run experience including welcome screen, tutorial steps, and team invitation flow.',
     priority: 'high',
     status: 'in-progress',
     assignee: { name: 'Sarah R' },
@@ -41,6 +45,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1041',
     title: 'Fix authentication bug on mobile Safari',
+    description:
+      'Users on iOS Safari 16+ are being logged out unexpectedly after background refresh events.',
     priority: 'high',
     status: 'open',
     assignee: { name: 'Alex M' },
@@ -50,6 +56,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1040',
     title: 'Write REST API documentation',
+    description:
+      'Document all v2 endpoints using OpenAPI 3.1, including request/response schemas and auth flows.',
     priority: 'medium',
     status: 'in-progress',
     assignee: { name: 'John D' },
@@ -58,6 +66,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1039',
     title: 'Set up CI/CD pipeline with GitHub Actions',
+    description:
+      'Automate build, test, and deploy stages for staging and production environments using reusable workflows.',
     priority: 'high',
     status: 'testing',
     assignee: { name: 'Kim L' },
@@ -67,6 +77,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1038',
     title: 'Update analytics dashboard metrics',
+    description:
+      'Add retention rate, DAU/MAU ratio, and funnel conversion charts to the main analytics view.',
     priority: 'medium',
     status: 'open',
     assignee: { name: 'Sarah R' },
@@ -75,6 +87,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1037',
     title: 'Implement dark mode support across all pages',
+    description:
+      'Apply CSS variables and Tailwind dark: utilities consistently to all components and pages.',
     priority: 'low',
     status: 'done',
     assignee: { name: 'Alex M' },
@@ -83,6 +97,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1036',
     title: 'Performance audit and database query optimization',
+    description:
+      'Profile slow queries, add missing indexes, and implement query result caching with Redis.',
     priority: 'medium',
     status: 'testing',
     assignee: null,
@@ -91,6 +107,8 @@ const TASKS: Task[] = [
   {
     id: 'TASK-1035',
     title: 'Migrate user data to PostgreSQL schema v2',
+    description:
+      'Execute zero-downtime migration from MongoDB using the dual-write pattern with rollback support.',
     priority: 'high',
     status: 'open',
     assignee: { name: 'Kim L' },
@@ -182,6 +200,109 @@ function PaginationButton({
   );
 }
 
+// ─── Kanban board ────────────────────────────────────────────────────────────
+
+const KANBAN_COLUMNS: {
+  status: TaskStatus;
+  label: string;
+  color: string;
+  badgeBg: string;
+  badgeText: string;
+}[] = [
+  {
+    status: 'open',
+    label: 'Open',
+    color: '#3b82f6',
+    badgeBg: 'rgba(59,130,246,0.09)',
+    badgeText: '#3b82f6',
+  },
+  {
+    status: 'in-progress',
+    label: 'In Progress',
+    color: '#8b5cf6',
+    badgeBg: 'rgba(139,92,246,0.09)',
+    badgeText: '#8b5cf6',
+  },
+  {
+    status: 'testing',
+    label: 'Testing',
+    color: '#f59e0b',
+    badgeBg: 'rgba(245,158,11,0.09)',
+    badgeText: '#d97706',
+  },
+  {
+    status: 'done',
+    label: 'Done',
+    color: '#10b981',
+    badgeBg: 'rgba(16,185,129,0.09)',
+    badgeText: '#059669',
+  },
+];
+
+function KanbanBoard({ tasks }: { tasks: Task[] }) {
+  return (
+    <div className="grid grid-cols-4 gap-3.5">
+      {KANBAN_COLUMNS.map((col) => {
+        const colTasks = tasks.filter((t) => t.status === col.status);
+        return (
+          <div
+            key={col.status}
+            className="flex flex-col overflow-hidden rounded-[14px] border border-[rgba(229,231,235,0.6)] bg-[#f9fafb]"
+          >
+            {/* Colored top accent */}
+            <div className="h-[3px] shrink-0 w-full" style={{ backgroundColor: col.color }} />
+
+            <div className="flex flex-col flex-1 p-3">
+              {/* Column header */}
+              <div className="flex items-center justify-between pb-3 px-0.5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: col.color }}
+                  />
+                  <span className="text-sm font-semibold text-text-label">{col.label}</span>
+                </div>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                  style={{ backgroundColor: col.badgeBg, color: col.badgeText }}
+                >
+                  {colTasks.length}
+                </span>
+              </div>
+
+              {/* Cards */}
+              <div className="flex flex-col gap-2">
+                {colTasks.map((task) => (
+                  <KanbanCard
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    description={task.description}
+                    priority={task.priority}
+                    status={task.status}
+                    assignee={task.assignee}
+                    dueDate={task.dueDate}
+                    isOverdue={task.isOverdue}
+                  />
+                ))}
+              </div>
+
+              {/* Add card button */}
+              <button
+                type="button"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-xs font-medium text-text-placeholder transition-colors hover:bg-white hover:border-border hover:text-text-muted"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add card
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── TasksPage ────────────────────────────────────────────────────────────────
 
 export function TasksPage() {
@@ -244,103 +365,110 @@ export function TasksPage() {
         </button>
       </div>
 
+      {/* Kanban board */}
+      {view === 'kanban' && <KanbanBoard tasks={filtered} />}
+
       {/* Table */}
-      <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-border bg-surface">
-              <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                Task
-              </th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                Priority
-              </th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                Status
-              </th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                Assignee
-              </th>
-              <th className="py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                Due Date
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((task) => (
-              <tr
-                key={task.id}
-                className="cursor-pointer border-b border-surface transition-colors last:border-0 hover:bg-surface"
-              >
-                <td className="py-3.5 pl-5 pr-4">
-                  <p className="font-mono text-[11px] text-text-placeholder">{task.id}</p>
-                  <p className="mt-0.5 text-sm font-medium text-text-dark">{task.title}</p>
-                </td>
-
-                <td className="px-4 py-3.5">
-                  <PriorityBadge priority={task.priority} />
-                </td>
-
-                <td className="px-4 py-3.5">
-                  <StatusBadge status={task.status} />
-                </td>
-
-                <td className="px-4 py-3.5">
-                  {task.assignee ? (
-                    <div className="flex items-center gap-2">
-                      <UserAvatar name={task.assignee.name} size="sm" />
-                      <span className="text-sm font-medium text-text-secondary">
-                        {task.assignee.name.split(' ')[0]}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-text-placeholder">—</span>
-                  )}
-                </td>
-
-                <td className="py-3.5 pl-4 pr-5">
-                  <div
-                    className={cn(
-                      'flex items-center gap-1.5 text-sm',
-                      task.isOverdue ? 'font-medium text-red-500' : 'text-text-secondary',
-                    )}
-                  >
-                    {task.isOverdue && <TriangleAlert className="h-3.5 w-3.5 flex-shrink-0" />}
-                    {task.dueDate}
-                  </div>
-                </td>
+      {view === 'list' && (
+        <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-surface">
+                <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  Task
+                </th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  Priority
+                </th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  Status
+                </th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  Assignee
+                </th>
+                <th className="py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  Due Date
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map((task) => (
+                <tr
+                  key={task.id}
+                  className="cursor-pointer border-b border-surface transition-colors last:border-0 hover:bg-surface"
+                >
+                  <td className="py-3.5 pl-5 pr-4">
+                    <p className="font-mono text-[11px] text-text-placeholder">{task.id}</p>
+                    <p className="mt-0.5 text-sm font-medium text-text-dark">{task.title}</p>
+                  </td>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-text-muted">
-          Showing{' '}
-          <span className="font-medium text-text-label">
-            {start}–{end}
-          </span>{' '}
-          of <span className="font-medium text-text-label">{TOTAL_TASKS}</span> tasks
-        </p>
+                  <td className="px-4 py-3.5">
+                    <PriorityBadge priority={task.priority} />
+                  </td>
 
-        <div className="flex items-center gap-1">
-          <PaginationButton disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </PaginationButton>
+                  <td className="px-4 py-3.5">
+                    <StatusBadge status={task.status} />
+                  </td>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-            <PaginationButton key={n} active={n === page} onClick={() => setPage(n)}>
-              {n}
-            </PaginationButton>
-          ))}
+                  <td className="px-4 py-3.5">
+                    {task.assignee ? (
+                      <div className="flex items-center gap-2">
+                        <UserAvatar name={task.assignee.name} size="sm" />
+                        <span className="text-sm font-medium text-text-secondary">
+                          {task.assignee.name.split(' ')[0]}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-text-placeholder">—</span>
+                    )}
+                  </td>
 
-          <PaginationButton disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </PaginationButton>
+                  <td className="py-3.5 pl-4 pr-5">
+                    <div
+                      className={cn(
+                        'flex items-center gap-1.5 text-sm',
+                        task.isOverdue ? 'font-medium text-red-500' : 'text-text-secondary',
+                      )}
+                    >
+                      {task.isOverdue && <TriangleAlert className="h-3.5 w-3.5 flex-shrink-0" />}
+                      {task.dueDate}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
+
+      {/* Pagination (list view only) */}
+      {view === 'list' && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-text-muted">
+            Showing{' '}
+            <span className="font-medium text-text-label">
+              {start}–{end}
+            </span>{' '}
+            of <span className="font-medium text-text-label">{TOTAL_TASKS}</span> tasks
+          </p>
+
+          <div className="flex items-center gap-1">
+            <PaginationButton disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </PaginationButton>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <PaginationButton key={n} active={n === page} onClick={() => setPage(n)}>
+                {n}
+              </PaginationButton>
+            ))}
+
+            <PaginationButton disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </PaginationButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
