@@ -14,7 +14,13 @@ export class TaskRepository extends BaseRepository<Task> {
   async findByIdWithRelations(id: string): Promise<
     | (Task & {
         createdBy: { id: string; firstName: string; lastName: string; email: string };
-        assignedTo: { id: string; firstName: string; lastName: string; email: string } | null;
+        assignedTo: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          email: string;
+          avatarUrl: string | null;
+        } | null;
       })
     | null
   > {
@@ -22,7 +28,9 @@ export class TaskRepository extends BaseRepository<Task> {
       where: { id, isDeleted: false },
       include: {
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
+        assignedTo: {
+          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+        },
       },
     });
   }
@@ -59,7 +67,9 @@ export class TaskRepository extends BaseRepository<Task> {
         orderBy: { [sortBy]: sortOrder },
         include: {
           createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-          assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
+          assignedTo: {
+            select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          },
         },
       }),
       this.db.task.count({ where }),
