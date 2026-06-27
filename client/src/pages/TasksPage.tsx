@@ -461,12 +461,13 @@ export function TasksPage() {
     setSearchTimer(t);
   }
 
+  const isKanban = view === 'kanban';
   const filters = {
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(priorityFilter ? { priority: priorityFilter } : {}),
-    page,
-    limit: PAGE_SIZE,
+    page: isKanban ? 1 : page,
+    limit: isKanban ? 100 : PAGE_SIZE,
   };
 
   const { tasks, meta, loading, error, createTask, updateTask } = useTasks(filters);

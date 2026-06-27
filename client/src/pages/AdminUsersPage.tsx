@@ -617,17 +617,19 @@ export function AdminUsersPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 pl-4 pr-5 text-right">
-                      {isLoading ? (
-                        <Loader2 className="ml-auto h-4 w-4 animate-spin text-text-placeholder" />
-                      ) : (
-                        <RowMenu
-                          user={user}
-                          currentUserId={me?.id ?? ''}
-                          onRoleChange={(u, r) => void handleRoleChange(u, r)}
-                          onToggleActive={(u) => void handleToggleActive(u)}
-                        />
-                      )}
+                    <td className="py-3.5 pl-4 pr-5">
+                      <div className="flex justify-end">
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-text-placeholder" />
+                        ) : (
+                          <RowMenu
+                            user={user}
+                            currentUserId={me?.id ?? ''}
+                            onRoleChange={(u, r) => void handleRoleChange(u, r)}
+                            onToggleActive={(u) => void handleToggleActive(u)}
+                          />
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
