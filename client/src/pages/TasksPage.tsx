@@ -14,6 +14,7 @@ import { PriorityBadge, type Priority } from '@/components/shared/PriorityBadge'
 import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { KanbanCard } from '@/components/shared/KanbanCard';
+import { CreateTaskModal } from '@/components/shared/CreateTaskModal';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -460,6 +461,7 @@ export function TasksPage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
 
   const handleStatusChange = (id: string, status: TaskStatus) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -513,12 +515,16 @@ export function TasksPage() {
 
         <button
           type="button"
+          onClick={() => setShowModal(true)}
           className="flex h-9 items-center gap-1.5 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           New Task
         </button>
       </div>
+
+      {/* Create Task modal */}
+      <CreateTaskModal open={showModal} onClose={() => setShowModal(false)} />
 
       {/* Kanban board */}
       {view === 'kanban' && <KanbanBoard tasks={filtered} onStatusChange={handleStatusChange} />}
