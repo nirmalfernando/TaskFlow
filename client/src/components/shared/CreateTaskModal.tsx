@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, Plus, Mic, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { X, Plus, Mic, Sparkles, Check, ArrowRight, Loader2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PriorityBadge, type Priority } from './PriorityBadge';
 import { StatusBadge, type TaskStatus } from './StatusBadge';
+import type { CreateTaskPayload, TaskStatusBackend, PriorityBackend } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,17 +20,45 @@ interface ParsedTask {
 export interface CreateTaskModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit?: (task: { title: string; description: string }) => void;
+  onCreateTask?: (payload: CreateTaskPayload) => Promise<unknown>;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function toBackendStatus(s: TaskStatus): TaskStatusBackend {
+  const map: Record<TaskStatus, TaskStatusBackend> = {
+    open: 'OPEN',
+    'in-progress': 'IN_PROGRESS',
+    testing: 'TESTING',
+    done: 'DONE',
+  };
+  return map[s];
+}
+
+function toBackendPriority(p: Priority): PriorityBackend {
+  const map: Record<Priority, PriorityBackend> = {
+    high: 'HIGH',
+    medium: 'MEDIUM',
+    low: 'LOW',
+  };
+  return map[p];
 }
 
 // ─── CreateTaskModal ──────────────────────────────────────────────────────────
 
-export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProps) {
+export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModalProps) {
   const [aiState, setAiState] = useState<AiState>('idle');
   const [aiInput, setAiInput] = useState('');
   const [parsedTask, setParsedTask] = useState<ParsedTask | null>(null);
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [status, setStatus] = useState<TaskStatus>('open');
+  const [dueDate, setDueDate] = useState('');
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   if (!open) return null;
 
@@ -52,6 +81,8 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
     if (parsedTask) {
       setTitle(parsedTask.title);
       setDescription(parsedTask.description);
+      setPriority(parsedTask.priority);
+      setStatus(parsedTask.status);
     }
   };
 
@@ -61,9 +92,28 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
     setParsedTask(null);
   };
 
-  const handleSubmit = () => {
-    onSubmit?.({ title, description });
-    handleClose();
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError('Title is required.');
+      return;
+    }
+    setError('');
+    setSaving(true);
+    try {
+      const payload: CreateTaskPayload = {
+        title: title.trim(),
+        ...(description.trim() ? { description: description.trim() } : {}),
+        status: toBackendStatus(status),
+        priority: toBackendPriority(priority),
+        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+      };
+      await onCreateTask?.(payload);
+      handleClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create task. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -72,6 +122,10 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
     setParsedTask(null);
     setTitle('');
     setDescription('');
+    setPriority('medium');
+    setStatus('open');
+    setDueDate('');
+    setError('');
     onClose();
   };
 
@@ -101,7 +155,6 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
         {/* AI Task Assistant */}
         <div className="px-6 pt-5">
           <div className="rounded-[14px] bg-[#eff6ff] p-4">
-            {/* AI header */}
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -113,7 +166,6 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
               </div>
             </div>
 
-            {/* Idle / parsing state */}
             {aiState !== 'parsed' && (
               <>
                 <textarea
@@ -132,9 +184,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      void handleParseTask();
-                    }}
+                    onClick={() => void handleParseTask()}
                     disabled={!aiInput.trim() || aiState === 'parsing'}
                     className="flex h-8 items-center gap-1.5 rounded-nav border border-[#bedbff] px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
                   >
@@ -145,10 +195,8 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
               </>
             )}
 
-            {/* Parsed state */}
             {aiState === 'parsed' && parsedTask && (
               <>
-                {/* Success banner */}
                 <div className="mb-3 flex items-center justify-between rounded-[10px] bg-[#dcfce7] px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-green-600" />
@@ -159,7 +207,6 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
                   <Sparkles className="h-3.5 w-3.5 text-green-500" />
                 </div>
 
-                {/* Preview card */}
                 <div className="mb-3 rounded-[10px] border border-border bg-white p-3.5">
                   <p className="text-sm font-semibold text-text-primary">{parsedTask.title}</p>
                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-placeholder">
@@ -174,7 +221,6 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
                   </div>
                 </div>
 
-                {/* Try Again / Use This Task */}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -206,7 +252,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
           {/* Title */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-label" htmlFor="task-title">
-              Title
+              Title <span className="text-red-400">*</span>
             </label>
             <input
               id="task-title"
@@ -214,11 +260,7 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Task title..."
-              className={cn(
-                'h-11 w-full rounded-input border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
-                'focus:border-primary focus:ring-2 focus:ring-primary/20',
-                title ? 'border-input' : 'border-input',
-              )}
+              className="h-11 w-full rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -235,6 +277,63 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
               className="h-[90px] w-full resize-none rounded-input border border-input bg-white px-3.5 py-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
+
+          {/* Priority / Status / Due Date row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-label" htmlFor="task-priority">
+                Priority
+              </label>
+              <div className="relative">
+                <select
+                  id="task-priority"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                  className="h-11 w-full appearance-none rounded-input border border-input bg-white px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-label" htmlFor="task-status">
+                Status
+              </label>
+              <div className="relative">
+                <select
+                  id="task-status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                  className="h-11 w-full appearance-none rounded-input border border-input bg-white px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="testing">Testing</option>
+                  <option value="done">Done</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-label" htmlFor="task-due">
+                Due Date
+              </label>
+              <input
+                id="task-due"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="h-11 w-full rounded-input border border-input bg-white px-3.5 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         {/* Footer */}
@@ -248,11 +347,26 @@ export function CreateTaskModal({ open, onClose, onSubmit }: CreateTaskModalProp
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
-            className="flex h-9 items-center gap-1.5 rounded-nav bg-primary px-5 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
+            onClick={() => void handleSubmit()}
+            disabled={saving || !title.trim()}
+            className={cn(
+              'flex h-9 items-center gap-1.5 rounded-nav px-5 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2)] transition-colors',
+              saving || !title.trim()
+                ? 'bg-primary/60 cursor-not-allowed'
+                : 'bg-primary hover:bg-primary/90',
+            )}
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            Create Task
+            {saving ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Creating…
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                Create Task
+              </>
+            )}
           </button>
         </div>
       </div>

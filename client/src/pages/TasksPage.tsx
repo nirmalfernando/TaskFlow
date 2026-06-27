@@ -1,4 +1,5 @@
-import { useState, useRef, Fragment } from 'react';
+import { useState, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   ChevronDown,
@@ -9,6 +10,7 @@ import {
   TriangleAlert,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { PriorityBadge, type Priority } from '@/components/shared/PriorityBadge';
 import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
@@ -16,122 +18,86 @@ import { UserAvatar } from '@/components/shared/UserAvatar';
 import { KanbanCard } from '@/components/shared/KanbanCard';
 import { CreateTaskModal } from '@/components/shared/CreateTaskModal';
 import { cn } from '@/lib/utils';
+import { useTasks } from '@/hooks/useTasks';
+import type { Task, TaskStatusBackend, PriorityBackend, UpdateTaskPayload } from '@/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Enum mappers ─────────────────────────────────────────────────────────────
 
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  priority: Priority;
-  status: TaskStatus;
-  assignee: { name: string } | null;
-  dueDate: string;
-  isOverdue?: boolean;
+function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
+  const map: Record<TaskStatusBackend, TaskStatus> = {
+    OPEN: 'open',
+    IN_PROGRESS: 'in-progress',
+    TESTING: 'testing',
+    DONE: 'done',
+  };
+  return map[s];
 }
 
-// ─── Seed data ────────────────────────────────────────────────────────────────
+function toDisplayPriority(p: PriorityBackend): Priority {
+  const map: Record<PriorityBackend, Priority> = {
+    LOW: 'low',
+    MEDIUM: 'medium',
+    HIGH: 'high',
+    CRITICAL: 'high',
+  };
+  return map[p];
+}
 
-const TASKS: Task[] = [
-  {
-    id: 'TASK-1042',
-    title: 'Redesign onboarding flow for new users',
-    description:
-      'Overhaul the first-run experience including welcome screen, tutorial steps, and team invitation flow.',
-    priority: 'high',
-    status: 'in-progress',
-    assignee: { name: 'Sarah R' },
-    dueDate: 'Jul 2',
-  },
-  {
-    id: 'TASK-1041',
-    title: 'Fix authentication bug on mobile Safari',
-    description:
-      'Users on iOS Safari 16+ are being logged out unexpectedly after background refresh events.',
-    priority: 'high',
-    status: 'open',
-    assignee: { name: 'Alex M' },
-    dueDate: 'Jun 20',
-    isOverdue: true,
-  },
-  {
-    id: 'TASK-1040',
-    title: 'Write REST API documentation',
-    description:
-      'Document all v2 endpoints using OpenAPI 3.1, including request/response schemas and auth flows.',
-    priority: 'medium',
-    status: 'in-progress',
-    assignee: { name: 'John D' },
-    dueDate: 'Jun 30',
-  },
-  {
-    id: 'TASK-1039',
-    title: 'Set up CI/CD pipeline with GitHub Actions',
-    description:
-      'Automate build, test, and deploy stages for staging and production environments using reusable workflows.',
-    priority: 'high',
-    status: 'testing',
-    assignee: { name: 'Kim L' },
-    dueDate: 'Jun 22',
-    isOverdue: true,
-  },
-  {
-    id: 'TASK-1038',
-    title: 'Update analytics dashboard metrics',
-    description:
-      'Add retention rate, DAU/MAU ratio, and funnel conversion charts to the main analytics view.',
-    priority: 'medium',
-    status: 'open',
-    assignee: { name: 'Sarah R' },
-    dueDate: 'Jul 8',
-  },
-  {
-    id: 'TASK-1037',
-    title: 'Implement dark mode support across all pages',
-    description:
-      'Apply CSS variables and Tailwind dark: utilities consistently to all components and pages.',
-    priority: 'low',
-    status: 'done',
-    assignee: { name: 'Alex M' },
-    dueDate: 'Jun 15',
-  },
-  {
-    id: 'TASK-1036',
-    title: 'Performance audit and database query optimization',
-    description:
-      'Profile slow queries, add missing indexes, and implement query result caching with Redis.',
-    priority: 'medium',
-    status: 'testing',
-    assignee: null,
-    dueDate: 'Jul 12',
-  },
-  {
-    id: 'TASK-1035',
-    title: 'Migrate user data to PostgreSQL schema v2',
-    description:
-      'Execute zero-downtime migration from MongoDB using the dual-write pattern with rollback support.',
-    priority: 'high',
-    status: 'open',
-    assignee: { name: 'Kim L' },
-    dueDate: 'Jun 18',
-    isOverdue: true,
-  },
-];
+function formatDueDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
-const PAGE_SIZE = 8;
-const TOTAL_TASKS = 42;
+function isOverdue(iso: string | null | undefined, status: TaskStatusBackend): boolean {
+  if (!iso || status === 'DONE') return false;
+  return new Date(iso) < new Date();
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function FilterPill({ label }: { label: string }) {
+const STATUS_OPTIONS: { label: string; value: TaskStatusBackend | '' }[] = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Open', value: 'OPEN' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Testing', value: 'TESTING' },
+  { label: 'Done', value: 'DONE' },
+];
+
+const PRIORITY_OPTIONS: { label: string; value: PriorityBackend | '' }[] = [
+  { label: 'All Priorities', value: '' },
+  { label: 'Low', value: 'LOW' },
+  { label: 'Medium', value: 'MEDIUM' },
+  { label: 'High', value: 'HIGH' },
+  { label: 'Critical', value: 'CRITICAL' },
+];
+
+function FilterSelect<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T | '';
+  options: { label: string; value: T | '' }[];
+  onChange: (v: T | '') => void;
+}) {
   return (
-    <button
-      type="button"
-      className="flex h-[34px] items-center gap-1.5 rounded-full border border-input bg-white px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
-    >
-      {label}
-      <ChevronDown className="h-3.5 w-3.5 text-text-placeholder" />
-    </button>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as T | '')}
+        className="h-[34px] appearance-none rounded-full border border-input bg-white pl-3.5 pr-8 text-sm font-medium text-text-secondary transition-colors hover:bg-surface focus:outline-none focus:border-primary"
+      >
+        {value === '' && <option value="">{label}</option>}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-placeholder" />
+    </div>
   );
 }
 
@@ -201,10 +167,11 @@ function PaginationButton({
   );
 }
 
-// ─── Kanban board ────────────────────────────────────────────────────────────
+// ─── Kanban board ─────────────────────────────────────────────────────────────
 
 const KANBAN_COLUMNS: {
   status: TaskStatus;
+  backendStatus: TaskStatusBackend;
   label: string;
   color: string;
   badgeBg: string;
@@ -212,6 +179,7 @@ const KANBAN_COLUMNS: {
 }[] = [
   {
     status: 'open',
+    backendStatus: 'OPEN',
     label: 'Open',
     color: '#3b82f6',
     badgeBg: 'rgba(59,130,246,0.09)',
@@ -219,6 +187,7 @@ const KANBAN_COLUMNS: {
   },
   {
     status: 'in-progress',
+    backendStatus: 'IN_PROGRESS',
     label: 'In Progress',
     color: '#8b5cf6',
     badgeBg: 'rgba(139,92,246,0.09)',
@@ -226,6 +195,7 @@ const KANBAN_COLUMNS: {
   },
   {
     status: 'testing',
+    backendStatus: 'TESTING',
     label: 'Testing',
     color: '#f59e0b',
     badgeBg: 'rgba(245,158,11,0.09)',
@@ -233,6 +203,7 @@ const KANBAN_COLUMNS: {
   },
   {
     status: 'done',
+    backendStatus: 'DONE',
     label: 'Done',
     color: '#10b981',
     badgeBg: 'rgba(16,185,129,0.09)',
@@ -240,7 +211,6 @@ const KANBAN_COLUMNS: {
   },
 ];
 
-// A thin horizontal line that appears at the exact insertion point between cards
 function DropLine({ active }: { active: boolean }) {
   return (
     <div
@@ -259,7 +229,6 @@ function DropLine({ active }: { active: boolean }) {
   );
 }
 
-// Empty-column drop target
 function EmptyDropZone({ isActive }: { isActive: boolean }) {
   return (
     <div
@@ -291,15 +260,16 @@ function EmptyDropZone({ isActive }: { isActive: boolean }) {
 function KanbanBoard({
   tasks,
   onStatusChange,
+  onAddCard,
 }: {
   tasks: Task[];
-  onStatusChange: (id: string, status: TaskStatus) => void;
+  onStatusChange: (id: string, status: TaskStatusBackend) => void;
+  onAddCard: () => void;
 }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
-  // Which gap index within the active column the cursor is currently over
+  const [dragOverColumn, setDragOverColumn] = useState<TaskStatusBackend | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const dragEnterCounters = useRef<Partial<Record<TaskStatus, number>>>({});
+  const dragEnterCounters = useState<Partial<Record<TaskStatusBackend, number>>>(() => ({}))[0];
 
   const handleDragStart = (taskId: string) => (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -311,22 +281,26 @@ function KanbanBoard({
     setDraggingId(null);
     setDragOverColumn(null);
     setDropIndex(null);
-    dragEnterCounters.current = {};
+    Object.keys(dragEnterCounters).forEach((k) => {
+      delete (dragEnterCounters as Record<string, number>)[k];
+    });
   };
 
-  const handleDragEnter = (status: TaskStatus) => (e: React.DragEvent) => {
+  const handleDragEnter = (status: TaskStatusBackend) => (e: React.DragEvent) => {
     e.preventDefault();
-    dragEnterCounters.current[status] = (dragEnterCounters.current[status] ?? 0) + 1;
+    (dragEnterCounters as Record<string, number>)[status] =
+      ((dragEnterCounters as Record<string, number>)[status] ?? 0) + 1;
     if (dragOverColumn !== status) {
       setDragOverColumn(status);
       setDropIndex(null);
     }
   };
 
-  const handleDragLeave = (status: TaskStatus) => () => {
-    dragEnterCounters.current[status] = (dragEnterCounters.current[status] ?? 1) - 1;
-    if ((dragEnterCounters.current[status] ?? 0) <= 0) {
-      dragEnterCounters.current[status] = 0;
+  const handleDragLeave = (status: TaskStatusBackend) => () => {
+    (dragEnterCounters as Record<string, number>)[status] =
+      ((dragEnterCounters as Record<string, number>)[status] ?? 1) - 1;
+    if (((dragEnterCounters as Record<string, number>)[status] ?? 0) <= 0) {
+      (dragEnterCounters as Record<string, number>)[status] = 0;
       setDragOverColumn((prev) => (prev === status ? null : prev));
       setDropIndex(null);
     }
@@ -337,8 +311,7 @@ function KanbanBoard({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  // Per-card drag-over: figure out if cursor is in the top or bottom half
-  const handleCardDragOver = (e: React.DragEvent, column: TaskStatus, cardIndex: number) => {
+  const handleCardDragOver = (e: React.DragEvent, column: TaskStatusBackend, cardIndex: number) => {
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const index = e.clientY < rect.top + rect.height / 2 ? cardIndex : cardIndex + 1;
@@ -348,14 +321,13 @@ function KanbanBoard({
     }
   };
 
-  const handleDrop = (status: TaskStatus) => (e: React.DragEvent) => {
+  const handleDrop = (status: TaskStatusBackend) => (e: React.DragEvent) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('text/plain');
     if (taskId) onStatusChange(taskId, status);
     setDraggingId(null);
     setDragOverColumn(null);
     setDropIndex(null);
-    dragEnterCounters.current = {};
   };
 
   const isDragging = draggingId !== null;
@@ -363,16 +335,16 @@ function KanbanBoard({
   return (
     <div className="grid grid-cols-4 gap-3.5">
       {KANBAN_COLUMNS.map((col) => {
-        const colTasks = tasks.filter((t) => t.status === col.status);
-        const isDropTarget = dragOverColumn === col.status;
+        const colTasks = tasks.filter((t) => t.status === col.backendStatus);
+        const isDropTarget = dragOverColumn === col.backendStatus;
 
         return (
           <div
             key={col.status}
-            onDragEnter={handleDragEnter(col.status)}
-            onDragLeave={handleDragLeave(col.status)}
+            onDragEnter={handleDragEnter(col.backendStatus)}
+            onDragLeave={handleDragLeave(col.backendStatus)}
             onDragOver={handleDragOver}
-            onDrop={handleDrop(col.status)}
+            onDrop={handleDrop(col.backendStatus)}
             className={cn(
               'flex flex-col overflow-hidden rounded-[14px] border transition-all duration-200',
               isDropTarget
@@ -380,11 +352,9 @@ function KanbanBoard({
                 : 'border-[rgba(229,231,235,0.6)] bg-[#f9fafb]',
             )}
           >
-            {/* Colored top accent */}
             <div className="h-[3px] shrink-0 w-full" style={{ backgroundColor: col.color }} />
 
             <div className="flex flex-col flex-1 p-3">
-              {/* Column header */}
               <div className="flex items-center justify-between pb-3 px-0.5">
                 <div className="flex items-center gap-2">
                   <span
@@ -401,46 +371,49 @@ function KanbanBoard({
                 </span>
               </div>
 
-              {/* Cards with per-gap drop indicators */}
               <div className="flex flex-col">
                 {colTasks.length === 0 && isDragging ? (
                   <EmptyDropZone isActive={isDropTarget} />
                 ) : (
                   <>
-                    {/* Gap before the first card */}
                     {isDragging && <DropLine active={isDropTarget && dropIndex === 0} />}
-
-                    {colTasks.map((task, i) => (
-                      <Fragment key={task.id}>
-                        <div
-                          onDragOver={(e) => handleCardDragOver(e, col.status, i)}
-                          className="mb-2"
-                        >
-                          <KanbanCard
-                            id={task.id}
-                            title={task.title}
-                            description={task.description}
-                            priority={task.priority}
-                            status={task.status}
-                            assignee={task.assignee}
-                            dueDate={task.dueDate}
-                            isOverdue={task.isOverdue}
-                            isDragging={draggingId === task.id}
-                            onDragStart={handleDragStart(task.id)}
-                            onDragEnd={handleDragEnd}
-                          />
-                        </div>
-                        {/* Gap after this card */}
-                        {isDragging && <DropLine active={isDropTarget && dropIndex === i + 1} />}
-                      </Fragment>
-                    ))}
+                    {colTasks.map((task, i) => {
+                      const due = formatDueDate(task.dueDate);
+                      const overdue = isOverdue(task.dueDate, task.status);
+                      const assigneeName = task.assignedTo
+                        ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+                        : null;
+                      return (
+                        <Fragment key={task.id}>
+                          <div
+                            onDragOver={(e) => handleCardDragOver(e, col.backendStatus, i)}
+                            className="mb-2"
+                          >
+                            <KanbanCard
+                              id={task.id}
+                              title={task.title}
+                              description={task.description ?? undefined}
+                              priority={toDisplayPriority(task.priority)}
+                              status={col.status}
+                              assignee={assigneeName ? { name: assigneeName } : null}
+                              dueDate={due ?? ''}
+                              isOverdue={overdue}
+                              isDragging={draggingId === task.id}
+                              onDragStart={handleDragStart(task.id)}
+                              onDragEnd={handleDragEnd}
+                            />
+                          </div>
+                          {isDragging && <DropLine active={isDropTarget && dropIndex === i + 1} />}
+                        </Fragment>
+                      );
+                    })}
                   </>
                 )}
               </div>
 
-              {/* Add card button */}
               <button
                 type="button"
+                onClick={onAddCard}
                 className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-xs font-medium text-text-placeholder transition-colors hover:bg-white hover:border-border hover:text-text-muted"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -456,33 +429,65 @@ function KanbanBoard({
 
 // ─── TasksPage ────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 8;
+
 export function TasksPage() {
-  const [tasks, setTasks] = useState(TASKS);
-  const [search, setSearch] = useState('');
+  const navigate = useNavigate();
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TaskStatusBackend | ''>('');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityBackend | ''>('');
   const [showModal, setShowModal] = useState(false);
 
-  const handleStatusChange = (id: string, status: TaskStatus) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  // Simple debounce for search
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    if (searchTimer) clearTimeout(searchTimer);
+    const t = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 400);
+    setSearchTimer(t);
+  }
+
+  const filters = {
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(priorityFilter ? { priority: priorityFilter } : {}),
+    page,
+    limit: PAGE_SIZE,
   };
 
-  const filtered = tasks.filter(
-    (t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.id.toLowerCase().includes(search.toLowerCase()),
-  );
+  const { tasks, meta, loading, error, createTask, updateTask } = useTasks(filters);
 
-  const totalPages = Math.ceil(TOTAL_TASKS / PAGE_SIZE);
-  const start = (page - 1) * PAGE_SIZE + 1;
-  const end = Math.min(page * PAGE_SIZE, TOTAL_TASKS);
+  async function handleStatusChange(id: string, status: TaskStatusBackend) {
+    const payload: UpdateTaskPayload = { status };
+    await updateTask(id, payload);
+  }
+
+  const totalPages = meta?.totalPages ?? 1;
+  const total = meta?.total ?? 0;
+  const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const end = Math.min(page * PAGE_SIZE, total);
+
+  const pageNumbers = Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+    if (totalPages <= 5) return i + 1;
+    if (page <= 3) return i + 1;
+    if (page >= totalPages - 2) return totalPages - 4 + i;
+    return page - 2 + i;
+  });
 
   return (
     <div className="flex flex-col gap-6 p-8">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">Tasks</h1>
-        <p className="mt-1 text-sm text-text-muted">{TOTAL_TASKS} tasks across all projects</p>
+        <p className="mt-1 text-sm text-text-muted">
+          {loading ? 'Loading…' : `${total} task${total === 1 ? '' : 's'} found`}
+        </p>
       </div>
 
       {/* Toolbar */}
@@ -492,14 +497,31 @@ export function TasksPage() {
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search tasks..."
             className="h-9 w-full rounded-input border border-input bg-white pl-9 pr-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
-        <FilterPill label="Status" />
-        <FilterPill label="Priority" />
+        <FilterSelect
+          label="Status"
+          value={statusFilter}
+          options={STATUS_OPTIONS}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        />
+
+        <FilterSelect
+          label="Priority"
+          value={priorityFilter}
+          options={PRIORITY_OPTIONS}
+          onChange={(v) => {
+            setPriorityFilter(v);
+            setPage(1);
+          }}
+        />
 
         <div className="flex-1" />
 
@@ -524,107 +546,156 @@ export function TasksPage() {
       </div>
 
       {/* Create Task modal */}
-      <CreateTaskModal open={showModal} onClose={() => setShowModal(false)} />
+      <CreateTaskModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onCreateTask={createTask}
+      />
+
+      {/* Error state */}
+      {error && (
+        <div className="rounded-card border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-text-placeholder" />
+        </div>
+      )}
 
       {/* Kanban board */}
-      {view === 'kanban' && <KanbanBoard tasks={filtered} onStatusChange={handleStatusChange} />}
+      {!loading && view === 'kanban' && (
+        <KanbanBoard
+          tasks={tasks}
+          onStatusChange={(id, status) => void handleStatusChange(id, status)}
+          onAddCard={() => setShowModal(true)}
+        />
+      )}
 
       {/* Table */}
-      {view === 'list' && (
+      {!loading && view === 'list' && (
         <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border bg-surface">
-                <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Task
-                </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Priority
-                </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Status
-                </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Assignee
-                </th>
-                <th className="py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Due Date
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((task) => (
-                <tr
-                  key={task.id}
-                  className="cursor-pointer border-b border-surface transition-colors last:border-0 hover:bg-surface"
-                >
-                  <td className="py-3.5 pl-5 pr-4">
-                    <p className="font-mono text-[11px] text-text-placeholder">{task.id}</p>
-                    <p className="mt-0.5 text-sm font-medium text-text-dark">{task.title}</p>
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    <PriorityBadge priority={task.priority} />
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    <StatusBadge status={task.status} />
-                  </td>
-
-                  <td className="px-4 py-3.5">
-                    {task.assignee ? (
-                      <div className="flex items-center gap-2">
-                        <UserAvatar name={task.assignee.name} size="sm" />
-                        <span className="text-sm font-medium text-text-secondary">
-                          {task.assignee.name.split(' ')[0]}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-text-placeholder">—</span>
-                    )}
-                  </td>
-
-                  <td className="py-3.5 pl-4 pr-5">
-                    <div
-                      className={cn(
-                        'flex items-center gap-1.5 text-sm',
-                        task.isOverdue ? 'font-medium text-red-500' : 'text-text-secondary',
-                      )}
-                    >
-                      {task.isOverdue && <TriangleAlert className="h-3.5 w-3.5 flex-shrink-0" />}
-                      {task.dueDate}
-                    </div>
-                  </td>
+          {tasks.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-sm font-medium text-text-muted">No tasks found.</p>
+            </div>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                    Task
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                    Priority
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                    Status
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                    Assignee
+                  </th>
+                  <th className="py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                    Due Date
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tasks.map((task) => {
+                  const due = formatDueDate(task.dueDate);
+                  const overdue = isOverdue(task.dueDate, task.status);
+                  const assigneeName = task.assignedTo
+                    ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+                    : null;
+
+                  return (
+                    <tr
+                      key={task.id}
+                      onClick={() => navigate(`/tasks/${task.id}`)}
+                      className="cursor-pointer border-b border-surface transition-colors last:border-0 hover:bg-surface"
+                    >
+                      <td className="py-3.5 pl-5 pr-4">
+                        <p className="font-mono text-[11px] text-text-placeholder">
+                          {task.id.slice(0, 8).toUpperCase()}
+                        </p>
+                        <p className="mt-0.5 text-sm font-medium text-text-dark">{task.title}</p>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <PriorityBadge priority={toDisplayPriority(task.priority)} />
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={toDisplayStatus(task.status)} />
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        {assigneeName ? (
+                          <div className="flex items-center gap-2">
+                            <UserAvatar
+                              name={assigneeName}
+                              src={task.assignedTo?.avatarUrl ?? undefined}
+                              size="sm"
+                            />
+                            <span className="text-sm font-medium text-text-secondary">
+                              {task.assignedTo?.firstName}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-text-placeholder">—</span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 pl-4 pr-5">
+                        {due ? (
+                          <div
+                            className={cn(
+                              'flex items-center gap-1.5 text-sm',
+                              overdue ? 'font-medium text-red-500' : 'text-text-secondary',
+                            )}
+                          >
+                            {overdue && <TriangleAlert className="h-3.5 w-3.5 flex-shrink-0" />}
+                            {due}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-text-placeholder">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
       {/* Pagination (list view only) */}
-      {view === 'list' && (
+      {!loading && view === 'list' && total > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-text-muted">
             Showing{' '}
             <span className="font-medium text-text-label">
               {start}–{end}
             </span>{' '}
-            of <span className="font-medium text-text-label">{TOTAL_TASKS}</span> tasks
+            of <span className="font-medium text-text-label">{total}</span> tasks
           </p>
 
           <div className="flex items-center gap-1">
-            <PaginationButton disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            <PaginationButton disabled={!meta?.hasPrev} onClick={() => setPage((p) => p - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </PaginationButton>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+            {pageNumbers.map((n) => (
               <PaginationButton key={n} active={n === page} onClick={() => setPage(n)}>
                 {n}
               </PaginationButton>
             ))}
 
-            <PaginationButton disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+            <PaginationButton disabled={!meta?.hasNext} onClick={() => setPage((p) => p + 1)}>
               <ChevronRight className="h-4 w-4" />
             </PaginationButton>
           </div>

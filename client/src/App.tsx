@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { TasksPage } from '@/pages/TasksPage';
+import { TaskDetailPage } from '@/pages/TaskDetailPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
@@ -20,6 +21,7 @@ export function App() {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/tasks/:id" element={<TaskDetailPage />} />
             <Route path="/users" element={<AdminUsersPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
