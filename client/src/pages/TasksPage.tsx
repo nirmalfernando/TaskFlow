@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Search,
   ChevronDown,
@@ -239,15 +239,109 @@ const KANBAN_COLUMNS: {
   },
 ];
 
-function KanbanBoard({ tasks }: { tasks: Task[] }) {
+function DropZone({ isActive }: { isActive: boolean }) {
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-1.5 rounded-[10px] border-2 border-dashed py-5 transition-all duration-200',
+        isActive
+          ? 'border-primary/50 bg-primary/5 scale-[1.01]'
+          : 'border-border/70 bg-transparent',
+      )}
+    >
+      <div
+        className={cn(
+          'flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-200',
+          isActive ? 'bg-primary/10 text-primary' : 'bg-surface text-text-placeholder',
+        )}
+      >
+        <Plus className="h-4 w-4" />
+      </div>
+      <span
+        className={cn(
+          'text-xs font-medium transition-colors duration-200',
+          isActive ? 'text-primary' : 'text-text-placeholder',
+        )}
+      >
+        Drop here
+      </span>
+    </div>
+  );
+}
+
+function KanbanBoard({
+  tasks,
+  onStatusChange,
+}: {
+  tasks: Task[];
+  onStatusChange: (id: string, status: TaskStatus) => void;
+}) {
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
+  const dragEnterCounters = useRef<Partial<Record<TaskStatus, number>>>({});
+
+  const handleDragStart = (taskId: string) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', taskId);
+    // Delay so the browser captures the ghost before isDragging styles apply
+    requestAnimationFrame(() => setDraggingId(taskId));
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setDragOverColumn(null);
+    dragEnterCounters.current = {};
+  };
+
+  const handleDragEnter = (status: TaskStatus) => (e: React.DragEvent) => {
+    e.preventDefault();
+    dragEnterCounters.current[status] = (dragEnterCounters.current[status] ?? 0) + 1;
+    setDragOverColumn(status);
+  };
+
+  const handleDragLeave = (status: TaskStatus) => () => {
+    dragEnterCounters.current[status] = (dragEnterCounters.current[status] ?? 1) - 1;
+    if ((dragEnterCounters.current[status] ?? 0) <= 0) {
+      dragEnterCounters.current[status] = 0;
+      setDragOverColumn((prev) => (prev === status ? null : prev));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (status: TaskStatus) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (taskId) onStatusChange(taskId, status);
+    setDraggingId(null);
+    setDragOverColumn(null);
+    dragEnterCounters.current = {};
+  };
+
+  const isDragging = draggingId !== null;
+
   return (
     <div className="grid grid-cols-4 gap-3.5">
       {KANBAN_COLUMNS.map((col) => {
         const colTasks = tasks.filter((t) => t.status === col.status);
+        const isDropTarget = dragOverColumn === col.status;
+
         return (
           <div
             key={col.status}
-            className="flex flex-col overflow-hidden rounded-[14px] border border-[rgba(229,231,235,0.6)] bg-[#f9fafb]"
+            onDragEnter={handleDragEnter(col.status)}
+            onDragLeave={handleDragLeave(col.status)}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop(col.status)}
+            className={cn(
+              'flex flex-col overflow-hidden rounded-[14px] border transition-all duration-200',
+              isDropTarget
+                ? 'border-primary/30 bg-primary/[0.03] shadow-[0_0_0_2px_rgba(43,127,255,0.15)]'
+                : 'border-[rgba(229,231,235,0.6)] bg-[#f9fafb]',
+            )}
           >
             {/* Colored top accent */}
             <div className="h-[3px] shrink-0 w-full" style={{ backgroundColor: col.color }} />
@@ -270,6 +364,13 @@ function KanbanBoard({ tasks }: { tasks: Task[] }) {
                 </span>
               </div>
 
+              {/* Drop zone — visible whenever a drag is in progress */}
+              {isDragging && (
+                <div className="mb-2">
+                  <DropZone isActive={isDropTarget} />
+                </div>
+              )}
+
               {/* Cards */}
               <div className="flex flex-col gap-2">
                 {colTasks.map((task) => (
@@ -283,6 +384,9 @@ function KanbanBoard({ tasks }: { tasks: Task[] }) {
                     assignee={task.assignee}
                     dueDate={task.dueDate}
                     isOverdue={task.isOverdue}
+                    isDragging={draggingId === task.id}
+                    onDragStart={handleDragStart(task.id)}
+                    onDragEnd={handleDragEnd}
                   />
                 ))}
               </div>
@@ -306,11 +410,16 @@ function KanbanBoard({ tasks }: { tasks: Task[] }) {
 // ─── TasksPage ────────────────────────────────────────────────────────────────
 
 export function TasksPage() {
+  const [tasks, setTasks] = useState(TASKS);
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [page, setPage] = useState(1);
 
-  const filtered = TASKS.filter(
+  const handleStatusChange = (id: string, status: TaskStatus) => {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  };
+
+  const filtered = tasks.filter(
     (t) =>
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       t.id.toLowerCase().includes(search.toLowerCase()),
@@ -366,7 +475,7 @@ export function TasksPage() {
       </div>
 
       {/* Kanban board */}
-      {view === 'kanban' && <KanbanBoard tasks={filtered} />}
+      {view === 'kanban' && <KanbanBoard tasks={filtered} onStatusChange={handleStatusChange} />}
 
       {/* Table */}
       {view === 'list' && (
