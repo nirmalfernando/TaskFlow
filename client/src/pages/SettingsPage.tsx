@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   Camera,
   Check,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme, type Theme } from '@/hooks/useTheme';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 
 // ─── Shared primitives ─────────────────────────────────────────────────────────
@@ -452,33 +453,61 @@ function SecuritySection() {
 
 // ─── Placeholder sections ──────────────────────────────────────────────────────
 
-function NotificationsSection() {
-  const items = [
-    {
-      label: 'Task assignments',
-      desc: 'When someone assigns a task to you',
-      defaultOn: true,
-    },
-    {
-      label: 'Task comments',
-      desc: 'When someone comments on your tasks',
-      defaultOn: true,
-    },
-    {
-      label: 'Due date reminders',
-      desc: '24 hours before a task is due',
-      defaultOn: false,
-    },
-    {
-      label: 'Status updates',
-      desc: 'When a task you follow changes status',
-      defaultOn: false,
-    },
-  ];
+const NOTIF_PREFS_KEY = 'taskflow_notification_prefs';
 
-  const [enabled, setEnabled] = useState<Record<string, boolean>>(
-    Object.fromEntries(items.map((i) => [i.label, i.defaultOn])),
-  );
+const NOTIF_ITEMS = [
+  {
+    key: 'taskAssignments',
+    label: 'Task assignments',
+    desc: 'When someone assigns a task to you',
+    defaultOn: true,
+  },
+  {
+    key: 'taskComments',
+    label: 'Task comments',
+    desc: 'When someone comments on your tasks',
+    defaultOn: true,
+  },
+  {
+    key: 'dueDateReminders',
+    label: 'Due date reminders',
+    desc: '24 hours before a task is due',
+    defaultOn: false,
+  },
+  {
+    key: 'statusUpdates',
+    label: 'Status updates',
+    desc: 'When a task you follow changes status',
+    defaultOn: false,
+  },
+] as const;
+
+type NotifKey = (typeof NOTIF_ITEMS)[number]['key'];
+
+function getStoredNotifPrefs(): Record<NotifKey, boolean> {
+  const defaults = Object.fromEntries(NOTIF_ITEMS.map((i) => [i.key, i.defaultOn])) as Record<
+    NotifKey,
+    boolean
+  >;
+  try {
+    const raw = localStorage.getItem(NOTIF_PREFS_KEY);
+    if (raw) return { ...defaults, ...(JSON.parse(raw) as Partial<Record<NotifKey, boolean>>) };
+  } catch {
+    // localStorage unavailable
+  }
+  return defaults;
+}
+
+function NotificationsSection() {
+  const [enabled, setEnabled] = useState<Record<NotifKey, boolean>>(getStoredNotifPrefs);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NOTIF_PREFS_KEY, JSON.stringify(enabled));
+    } catch {
+      // localStorage unavailable
+    }
+  }, [enabled]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -487,26 +516,26 @@ function NotificationsSection() {
         <p className="mt-0.5 text-xs text-text-muted">Choose what you get notified about.</p>
       </div>
       <div className="rounded-card border border-border bg-card divide-y divide-border">
-        {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between px-5 py-4">
+        {NOTIF_ITEMS.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-5 py-4">
             <div>
               <p className="text-sm font-medium text-text-primary">{item.label}</p>
               <p className="text-xs text-text-muted mt-0.5">{item.desc}</p>
             </div>
             <button
               type="button"
-              onClick={() => setEnabled((e) => ({ ...e, [item.label]: !e[item.label] }))}
+              onClick={() => setEnabled((e) => ({ ...e, [item.key]: !e[item.key] }))}
               className={cn(
                 'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
-                enabled[item.label] ? 'bg-primary' : 'bg-border',
+                enabled[item.key] ? 'bg-primary' : 'bg-border',
               )}
               role="switch"
-              aria-checked={enabled[item.label]}
+              aria-checked={enabled[item.key]}
             >
               <span
                 className={cn(
                   'pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
-                  enabled[item.label] ? 'translate-x-4' : 'translate-x-0',
+                  enabled[item.key] ? 'translate-x-4' : 'translate-x-0',
                 )}
               />
             </button>
@@ -518,13 +547,13 @@ function NotificationsSection() {
 }
 
 function AppearanceSection() {
-  const themes = [
+  const themes: { id: Theme; label: string }[] = [
     { id: 'light', label: 'Light' },
     { id: 'dark', label: 'Dark' },
     { id: 'system', label: 'System' },
-  ] as const;
+  ];
 
-  const [selected, setSelected] = useState<'light' | 'dark' | 'system'>('light');
+  const { theme: selected, setTheme: setSelected } = useTheme();
 
   return (
     <div className="flex flex-col gap-3">

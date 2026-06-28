@@ -80,7 +80,7 @@ export function TopBar({
   onNotificationClick,
   className,
 }: TopBarProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const notifContainerRef = useRef<HTMLDivElement>(null);
@@ -134,7 +134,10 @@ export function TopBar({
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        <IconButton label="Toggle theme" onClick={toggleTheme}>
+        <IconButton
+          label="Toggle theme"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
           {theme === 'dark' ? (
             <Sun className="h-[18px] w-[18px]" />
           ) : (
