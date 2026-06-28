@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 export type TaskStatus = 'todo' | 'in-progress' | 'in-qa' | 'completed';
 
 export interface StatusBadgeProps {
-  status: TaskStatus;
+  status: TaskStatus | undefined;
   className?: string;
 }
 
@@ -27,7 +27,9 @@ const config: Record<TaskStatus, { bg: string; text: string; label: string }> = 
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const { bg, text, label } = config[status];
+  const cfg = status ? config[status] : undefined;
+  if (!cfg) return null;
+  const { bg, text, label } = cfg;
   return (
     <span
       className={cn(

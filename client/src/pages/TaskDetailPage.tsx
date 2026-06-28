@@ -25,8 +25,8 @@ import type { Task, ActivityLog, TaskStatusBackend, PriorityBackend } from '@/ty
 
 // ─── Enum mappers ─────────────────────────────────────────────────────────────
 
-function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
-  const map: Record<TaskStatusBackend, TaskStatus> = {
+function toDisplayStatus(s: string): TaskStatus | undefined {
+  const map: Record<string, TaskStatus> = {
     TODO: 'todo',
     IN_PROGRESS: 'in-progress',
     IN_QA: 'in-qa',
