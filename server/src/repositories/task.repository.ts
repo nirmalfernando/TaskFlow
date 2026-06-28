@@ -35,7 +35,7 @@ export class TaskRepository extends BaseRepository<Task> {
     });
   }
 
-  async findFiltered(filters: TaskFiltersInput): Promise<[Task[], number]> {
+  async findFiltered(filters: TaskFiltersInput, viewerId?: string): Promise<[Task[], number]> {
     const {
       status,
       priority,
@@ -52,8 +52,9 @@ export class TaskRepository extends BaseRepository<Task> {
       ...(status && { status }),
       ...(priority && { priority }),
       ...(assignedToId && { assignedToId }),
+      ...(viewerId && { OR: [{ createdById: viewerId }, { assignedToId: viewerId }] }),
       ...(search && {
-        OR: [{ title: { contains: search } }, { description: { contains: search } }],
+        AND: [{ OR: [{ title: { contains: search } }, { description: { contains: search } }] }],
       }),
     };
 

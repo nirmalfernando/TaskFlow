@@ -49,8 +49,10 @@ export async function createTask(
 
 export async function getTasks(
   filters: TaskFiltersInput,
+  actor: JwtPayload,
 ): Promise<{ tasks: NonNullable<TaskWithRelations>[]; meta: PaginationMeta }> {
-  const [tasks, total] = await taskRepo.findFiltered(filters);
+  const viewerId = actor.role !== 'ADMIN' ? actor.userId : undefined;
+  const [tasks, total] = await taskRepo.findFiltered(filters, viewerId);
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 20;
   return {

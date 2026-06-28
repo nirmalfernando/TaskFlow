@@ -15,7 +15,7 @@ class TaskController extends BaseController {
 
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { tasks, meta } = await TaskService.getTasks(req.query);
+      const { tasks, meta } = await TaskService.getTasks(req.query, req.user!);
       this.paginated(res, tasks, meta);
     } catch (err) {
       next(err);
