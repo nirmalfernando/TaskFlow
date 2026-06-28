@@ -349,7 +349,7 @@ function KanbanBoard({
               'flex flex-col overflow-hidden rounded-[14px] border transition-all duration-200',
               isDropTarget
                 ? 'border-primary/30 bg-primary/[0.03] shadow-[0_0_0_2px_rgba(43,127,255,0.15)]'
-                : 'border-[rgba(229,231,235,0.6)] bg-[#f9fafb]',
+                : 'border-border bg-surface',
             )}
           >
             <div className="h-[3px] shrink-0 w-full" style={{ backgroundColor: col.color }} />

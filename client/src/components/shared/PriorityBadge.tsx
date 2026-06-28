@@ -8,9 +8,24 @@ export interface PriorityBadgeProps {
 }
 
 const config: Record<Priority, { bg: string; dot: string; text: string; label: string }> = {
-  high: { bg: 'bg-red-50', dot: 'bg-red-500', text: 'text-red-600', label: 'High' },
-  medium: { bg: 'bg-orange-50', dot: 'bg-orange-400', text: 'text-orange-600', label: 'Medium' },
-  low: { bg: 'bg-green-50', dot: 'bg-green-500', text: 'text-green-700', label: 'Low' },
+  high: {
+    bg: 'bg-red-50 dark:bg-red-500/10',
+    dot: 'bg-red-500',
+    text: 'text-red-600 dark:text-red-400',
+    label: 'High',
+  },
+  medium: {
+    bg: 'bg-orange-50 dark:bg-orange-500/10',
+    dot: 'bg-orange-400',
+    text: 'text-orange-600 dark:text-orange-400',
+    label: 'Medium',
+  },
+  low: {
+    bg: 'bg-green-50 dark:bg-green-500/10',
+    dot: 'bg-green-500',
+    text: 'text-green-700 dark:text-green-400',
+    label: 'Low',
+  },
 };
 
 export function PriorityBadge({ priority, className }: PriorityBadgeProps) {

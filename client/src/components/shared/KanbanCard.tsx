@@ -74,6 +74,9 @@ export function KanbanCard({
           '',
         )}</div><span class="text-[10px] font-semibold uppercase tracking-wide text-[#51a2ff]">Dragging</span>`;
       clone.insertBefore(handle, clone.firstChild);
+      const cardBg = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-card')
+        .trim();
       Object.assign(clone.style, {
         position: 'fixed',
         top: '-9999px',
@@ -83,7 +86,7 @@ export function KanbanCard({
         border: '1px solid #bedbff',
         boxShadow: '0px 0px 0px 2px rgba(190,219,255,0.5), 0px 20px 48px 0px rgba(0,0,0,0.2)',
         borderRadius: '12px',
-        background: 'white',
+        background: cardBg || 'white',
         padding: '17px',
       });
       document.body.appendChild(clone);
@@ -134,7 +137,7 @@ export function KanbanCard({
       </div>
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between border-t border-surface pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
         <div
           className={cn(
             'flex items-center gap-1.5 text-xs font-medium',

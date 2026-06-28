@@ -9,9 +9,21 @@ export interface StatusBadgeProps {
 
 const config: Record<TaskStatus, { bg: string; text: string; label: string }> = {
   open: { bg: 'bg-primary-light', text: 'text-primary', label: 'Open' },
-  'in-progress': { bg: 'bg-violet-50', text: 'text-violet-700', label: 'In Progress' },
-  testing: { bg: 'bg-sky-50', text: 'text-sky-700', label: 'Testing' },
-  done: { bg: 'bg-green-50', text: 'text-green-700', label: 'Done' },
+  'in-progress': {
+    bg: 'bg-violet-50 dark:bg-violet-500/10',
+    text: 'text-violet-700 dark:text-violet-400',
+    label: 'In Progress',
+  },
+  testing: {
+    bg: 'bg-sky-50 dark:bg-sky-500/10',
+    text: 'text-sky-700 dark:text-sky-400',
+    label: 'Testing',
+  },
+  done: {
+    bg: 'bg-green-50 dark:bg-green-500/10',
+    text: 'text-green-700 dark:text-green-400',
+    label: 'Done',
+  },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
