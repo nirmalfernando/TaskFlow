@@ -13,10 +13,10 @@ import type { Task, TaskStatusBackend, PriorityBackend } from '@/types';
 
 function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
   const map: Record<TaskStatusBackend, TaskStatus> = {
-    OPEN: 'open',
+    TODO: 'todo',
     IN_PROGRESS: 'in-progress',
-    TESTING: 'testing',
-    DONE: 'done',
+    IN_QA: 'in-qa',
+    COMPLETED: 'completed',
   };
   return map[s];
 }
@@ -193,7 +193,7 @@ export function TaskDetailDrawer({ taskId, onClose }: Props) {
                     <div
                       className={cn(
                         'flex items-center gap-1.5 text-sm',
-                        new Date(task.dueDate) < new Date() && task.status !== 'DONE'
+                        new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED'
                           ? 'font-medium text-red-500'
                           : 'text-text-secondary',
                       )}

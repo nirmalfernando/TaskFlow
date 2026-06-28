@@ -26,10 +26,10 @@ import type { Task, TaskStatusBackend, PriorityBackend, UpdateTaskPayload } from
 
 function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
   const map: Record<TaskStatusBackend, TaskStatus> = {
-    OPEN: 'open',
+    TODO: 'todo',
     IN_PROGRESS: 'in-progress',
-    TESTING: 'testing',
-    DONE: 'done',
+    IN_QA: 'in-qa',
+    COMPLETED: 'completed',
   };
   return map[s];
 }
@@ -50,7 +50,7 @@ function formatDueDate(iso: string | null | undefined): string | null {
 }
 
 function isOverdue(iso: string | null | undefined, status: TaskStatusBackend): boolean {
-  if (!iso || status === 'DONE') return false;
+  if (!iso || status === 'COMPLETED') return false;
   return new Date(iso) < new Date();
 }
 
@@ -58,10 +58,10 @@ function isOverdue(iso: string | null | undefined, status: TaskStatusBackend): b
 
 const STATUS_OPTIONS: { label: string; value: TaskStatusBackend | '' }[] = [
   { label: 'All Statuses', value: '' },
-  { label: 'Open', value: 'OPEN' },
+  { label: 'To Do', value: 'TODO' },
   { label: 'In Progress', value: 'IN_PROGRESS' },
-  { label: 'Testing', value: 'TESTING' },
-  { label: 'Done', value: 'DONE' },
+  { label: 'In QA', value: 'IN_QA' },
+  { label: 'Completed', value: 'COMPLETED' },
 ];
 
 const PRIORITY_OPTIONS: { label: string; value: PriorityBackend | '' }[] = [
@@ -179,9 +179,9 @@ const KANBAN_COLUMNS: {
   badgeText: string;
 }[] = [
   {
-    status: 'open',
-    backendStatus: 'OPEN',
-    label: 'Open',
+    status: 'todo',
+    backendStatus: 'TODO',
+    label: 'To Do',
     color: '#3b82f6',
     badgeBg: 'rgba(59,130,246,0.09)',
     badgeText: '#3b82f6',
@@ -195,17 +195,17 @@ const KANBAN_COLUMNS: {
     badgeText: '#8b5cf6',
   },
   {
-    status: 'testing',
-    backendStatus: 'TESTING',
-    label: 'Testing',
+    status: 'in-qa',
+    backendStatus: 'IN_QA',
+    label: 'In QA',
     color: '#f59e0b',
     badgeBg: 'rgba(245,158,11,0.09)',
     badgeText: '#d97706',
   },
   {
-    status: 'done',
-    backendStatus: 'DONE',
-    label: 'Done',
+    status: 'completed',
+    backendStatus: 'COMPLETED',
+    label: 'Completed',
     color: '#10b981',
     badgeBg: 'rgba(16,185,129,0.09)',
     badgeText: '#059669',
@@ -503,7 +503,7 @@ export function TasksPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">Tasks</h1>

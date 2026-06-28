@@ -43,7 +43,7 @@ function tasksToNotifications(
   const notifications: AppNotification[] = [];
 
   for (const task of tasks) {
-    if (task.status === 'DONE') continue;
+    if (task.status === 'COMPLETED') continue;
 
     // Assigned to me
     if (task.assignedToId === userId) {

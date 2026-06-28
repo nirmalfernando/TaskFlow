@@ -60,10 +60,10 @@ export interface CreateTaskModalProps {
 
 function toBackendStatus(s: TaskStatus): TaskStatusBackend {
   const map: Record<TaskStatus, TaskStatusBackend> = {
-    open: 'OPEN',
+    todo: 'TODO',
     'in-progress': 'IN_PROGRESS',
-    testing: 'TESTING',
-    done: 'DONE',
+    'in-qa': 'IN_QA',
+    completed: 'COMPLETED',
   };
   return map[s];
 }
@@ -388,7 +388,7 @@ export function CreateTaskModal({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
-  const [status, setStatus] = useState<TaskStatus>('open');
+  const [status, setStatus] = useState<TaskStatus>('todo');
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
 
@@ -496,7 +496,7 @@ export function CreateTaskModal({
     setTitle('');
     setDescription('');
     setPriority('medium');
-    setStatus('open');
+    setStatus('todo');
     setDueDate(null);
     setAssigneeId(null);
     setError('');
@@ -733,10 +733,10 @@ export function CreateTaskModal({
                     onChange={(e) => setStatus(e.target.value as TaskStatus)}
                     className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="open">Open</option>
+                    <option value="todo">To Do</option>
                     <option value="in-progress">In Progress</option>
-                    <option value="testing">Testing</option>
-                    <option value="done">Done</option>
+                    <option value="in-qa">In QA</option>
+                    <option value="completed">Completed</option>
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
                 </div>

@@ -6,7 +6,7 @@ import type { TaskStatus } from '@/components/shared/StatusBadge';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ColumnId = 'open' | 'in-progress' | 'testing' | 'done';
+export type ColumnId = 'todo' | 'in-progress' | 'in-qa' | 'completed';
 
 export interface KanbanTask extends KanbanCardData {
   column: ColumnId;
@@ -22,15 +22,15 @@ export interface TaskKanbanViewProps {
 // ─── Column config ────────────────────────────────────────────────────────────
 
 const COLUMNS: { id: ColumnId; label: string; dot: string; badge: string }[] = [
-  { id: 'open', label: 'Open', dot: 'bg-primary', badge: 'bg-primary-light text-primary' },
+  { id: 'todo', label: 'To Do', dot: 'bg-primary', badge: 'bg-primary-light text-primary' },
   {
     id: 'in-progress',
     label: 'In Progress',
     dot: 'bg-amber-400',
     badge: 'bg-amber-50 text-amber-600',
   },
-  { id: 'testing', label: 'Testing', dot: 'bg-orange-500', badge: 'bg-orange-50 text-orange-600' },
-  { id: 'done', label: 'Done', dot: 'bg-success', badge: 'bg-green-50 text-green-700' },
+  { id: 'in-qa', label: 'In QA', dot: 'bg-orange-500', badge: 'bg-orange-50 text-orange-600' },
+  { id: 'completed', label: 'Completed', dot: 'bg-success', badge: 'bg-green-50 text-green-700' },
 ];
 
 // ─── Drop zone ────────────────────────────────────────────────────────────────
@@ -178,11 +178,11 @@ export function TaskKanbanView({
     const toStatus: TaskStatus =
       toColumn === 'in-progress'
         ? 'in-progress'
-        : toColumn === 'testing'
-          ? 'testing'
-          : toColumn === 'done'
-            ? 'done'
-            : 'open';
+        : toColumn === 'in-qa'
+          ? 'in-qa'
+          : toColumn === 'completed'
+            ? 'completed'
+            : 'todo';
 
     setTasks((prev) =>
       prev.map((t) =>

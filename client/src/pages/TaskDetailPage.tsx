@@ -26,10 +26,10 @@ import type { Task, ActivityLog, TaskStatusBackend, PriorityBackend } from '@/ty
 
 function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
   const map: Record<TaskStatusBackend, TaskStatus> = {
-    OPEN: 'open',
+    TODO: 'todo',
     IN_PROGRESS: 'in-progress',
-    TESTING: 'testing',
-    DONE: 'done',
+    IN_QA: 'in-qa',
+    COMPLETED: 'completed',
   };
   return map[s];
 }
@@ -242,7 +242,7 @@ export function TaskDetailPage() {
     : null;
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6">
       {/* Back link */}
       <button
         type="button"
@@ -365,10 +365,10 @@ export function TaskDetailPage() {
                     onChange={(e) => void handleStatusChange(e)}
                     className="h-9 w-full appearance-none rounded-input border border-input bg-card px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="OPEN">Open</option>
+                    <option value="TODO">To Do</option>
                     <option value="IN_PROGRESS">In Progress</option>
-                    <option value="TESTING">Testing</option>
-                    <option value="DONE">Done</option>
+                    <option value="IN_QA">In QA</option>
+                    <option value="COMPLETED">Completed</option>
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-placeholder" />
                 </div>

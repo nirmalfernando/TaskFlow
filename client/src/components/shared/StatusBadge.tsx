@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type TaskStatus = 'open' | 'in-progress' | 'testing' | 'done';
+export type TaskStatus = 'todo' | 'in-progress' | 'in-qa' | 'completed';
 
 export interface StatusBadgeProps {
   status: TaskStatus;
@@ -8,21 +8,21 @@ export interface StatusBadgeProps {
 }
 
 const config: Record<TaskStatus, { bg: string; text: string; label: string }> = {
-  open: { bg: 'bg-primary-light', text: 'text-primary', label: 'Open' },
+  todo: { bg: 'bg-primary-light', text: 'text-primary', label: 'To Do' },
   'in-progress': {
     bg: 'bg-violet-50 dark:bg-violet-500/10',
     text: 'text-violet-700 dark:text-violet-400',
     label: 'In Progress',
   },
-  testing: {
+  'in-qa': {
     bg: 'bg-sky-50 dark:bg-sky-500/10',
     text: 'text-sky-700 dark:text-sky-400',
-    label: 'Testing',
+    label: 'In QA',
   },
-  done: {
+  completed: {
     bg: 'bg-green-50 dark:bg-green-500/10',
     text: 'text-green-700 dark:text-green-400',
-    label: 'Done',
+    label: 'Completed',
   },
 };
 

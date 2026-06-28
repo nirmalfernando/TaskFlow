@@ -29,7 +29,7 @@ export interface AuthResponse {
 
 // ─── Task types ───────────────────────────────────────────────────────────────
 
-export type TaskStatusBackend = 'OPEN' | 'IN_PROGRESS' | 'TESTING' | 'DONE';
+export type TaskStatusBackend = 'TODO' | 'IN_PROGRESS' | 'IN_QA' | 'COMPLETED';
 export type PriorityBackend = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface TaskUser {

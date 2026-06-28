@@ -105,25 +105,25 @@ function PriorityDistributionCard({ tasks }: { tasks: Task[] }) {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: '#3b82f6',
+  TODO: '#3b82f6',
   IN_PROGRESS: '#8b5cf6',
-  TESTING: '#f59e0b',
-  DONE: '#10b981',
+  IN_QA: '#f59e0b',
+  COMPLETED: '#10b981',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Open',
+  TODO: 'To Do',
   IN_PROGRESS: 'In Progress',
-  TESTING: 'Testing',
-  DONE: 'Done',
+  IN_QA: 'In QA',
+  COMPLETED: 'Completed',
 };
 
 function TasksByStatusCard({ tasks }: { tasks: Task[] }) {
   const counts = {
-    OPEN: tasks.filter((t) => t.status === 'OPEN').length,
+    TODO: tasks.filter((t) => t.status === 'TODO').length,
     IN_PROGRESS: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
-    TESTING: tasks.filter((t) => t.status === 'TESTING').length,
-    DONE: tasks.filter((t) => t.status === 'DONE').length,
+    IN_QA: tasks.filter((t) => t.status === 'IN_QA').length,
+    COMPLETED: tasks.filter((t) => t.status === 'COMPLETED').length,
   };
   const total = tasks.length;
 
@@ -216,9 +216,9 @@ export function DashboardPage() {
   }, []);
 
   const total = tasks.length;
-  const open = tasks.filter((t) => t.status === 'OPEN').length;
+  const open = tasks.filter((t) => t.status === 'TODO').length;
   const inProgress = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
-  const done = tasks.filter((t) => t.status === 'DONE').length;
+  const done = tasks.filter((t) => t.status === 'COMPLETED').length;
 
   return (
     <div className="flex flex-col gap-8">
