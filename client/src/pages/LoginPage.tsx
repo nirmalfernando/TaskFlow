@@ -7,13 +7,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { emailSchema } from '@/lib/validation';
 
 const FEATURE_FLAGS = {
   googleSso: false,
 } as const;
 
 const schema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: emailSchema,
   password: z.string().min(1, 'Password is required'),
 });
 

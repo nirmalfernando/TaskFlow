@@ -1,24 +1,20 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { emailSchema, passwordSchema, PASSWORD_REGEX } from '@/lib/validation';
 
 const schema = z
   .object({
     firstName: z.string().min(1, 'First name is required').max(50),
     lastName: z.string().min(1, 'Last name is required').max(50),
-    email: z.string().email('Invalid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Must contain an uppercase letter')
-      .regex(/[a-z]/, 'Must contain a lowercase letter')
-      .regex(/[0-9]/, 'Must contain a number'),
+    email: emailSchema,
+    password: passwordSchema,
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -72,6 +68,40 @@ function PasswordField({
   );
 }
 
+const PASSWORD_RULES = [
+  { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
+  { label: 'One uppercase letter', test: (v: string) => PASSWORD_REGEX.uppercase.test(v) },
+  { label: 'One lowercase letter', test: (v: string) => PASSWORD_REGEX.lowercase.test(v) },
+  { label: 'One number', test: (v: string) => PASSWORD_REGEX.digit.test(v) },
+];
+
+function PasswordRequirements({ value }: { value: string }) {
+  if (!value) return null;
+  return (
+    <ul className="flex flex-col gap-1 mt-1">
+      {PASSWORD_RULES.map(({ label, test }) => {
+        const satisfied = test(value);
+        return (
+          <li
+            key={label}
+            className={cn(
+              'flex items-center gap-1.5 text-xs',
+              satisfied ? 'text-green-600' : 'text-text-placeholder',
+            )}
+          >
+            {satisfied ? (
+              <Check className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <X className="h-3.5 w-3.5 shrink-0" />
+            )}
+            {label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function RegisterPage() {
   const [serverError, setServerError] = useState('');
   const { register: registerUser } = useAuth();
@@ -80,8 +110,11 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  const passwordValue = useWatch({ control, name: 'password', defaultValue: '' });
 
   const onSubmit = async (data: FormData) => {
     setServerError('');
@@ -215,6 +248,7 @@ export function RegisterPage() {
               registration={register('password')}
               error={errors.password?.message}
             />
+            <PasswordRequirements value={passwordValue} />
           </div>
 
           {/* Confirm Password */}
