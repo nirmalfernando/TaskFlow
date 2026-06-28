@@ -29,7 +29,7 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onCancel} />
-      <div className="relative z-10 w-full max-w-[400px] rounded-[20px] border border-border bg-white shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
+      <div className="relative z-10 w-full max-w-[400px] rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
         <div className="p-6">
           <h2 className="text-base font-semibold text-text-primary">{title}</h2>
           <p className="mt-2 text-sm text-text-muted">{description}</p>

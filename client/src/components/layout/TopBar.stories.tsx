@@ -1,6 +1,37 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn } from 'storybook/test';
 import { TopBar } from './TopBar';
+import type { AppNotification } from '@/types';
+
+const sampleNotifications: AppNotification[] = [
+  {
+    id: 'assigned:task-1',
+    type: 'assigned',
+    taskId: 'task-1',
+    taskTitle: 'Implement dark mode',
+    message: 'You\'ve been assigned to "Implement dark mode"',
+    read: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'due_today:task-2',
+    type: 'due_today',
+    taskId: 'task-2',
+    taskTitle: 'Ship v2 release',
+    message: '"Ship v2 release" is due today',
+    read: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'assigned:task-3',
+    type: 'assigned',
+    taskId: 'task-3',
+    taskTitle: 'Update documentation',
+    message: 'You\'ve been assigned to "Update documentation"',
+    read: true,
+    createdAt: new Date().toISOString(),
+  },
+];
 
 const meta: Meta<typeof TopBar> = {
   title: 'Layout/TopBar',
@@ -16,64 +47,48 @@ const meta: Meta<typeof TopBar> = {
   ],
   args: {
     user: { name: 'John Doe' },
-    onThemeToggle: fn(),
-    onNotifications: fn(),
     onProfileClick: fn(),
+    onMarkAllRead: fn(),
+    onMarkRead: fn(),
+    onNotificationClick: fn(),
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof TopBar>;
 
-// Matches Figma node 3:136 — Dashboard TopBar with search
 export const WithSearch: Story = {
   name: 'With Search (Dashboard)',
   args: {
     onSearch: fn(),
     searchPlaceholder: 'Search tasks…',
-    hasNotification: true,
+    notifications: sampleNotifications,
+    unreadCount: 2,
   },
 };
 
-// Matches Figma node 6:443 — Tasks page TopBar with title
 export const WithTitle: Story = {
   name: 'With Title (Tasks Page)',
   args: {
     title: 'Tasks',
-    hasNotification: true,
+    notifications: sampleNotifications,
+    unreadCount: 2,
   },
 };
 
-export const TitleVariants: Story = {
-  render: (args) => (
-    <div className="flex flex-col">
-      <TopBar {...args} title="Dashboard" />
-      <TopBar {...args} title="Tasks" />
-      <TopBar {...args} title="Team" />
-      <TopBar {...args} title="Settings" />
-    </div>
-  ),
-  args: { hasNotification: false },
-};
-
-export const WithNotificationBadge: Story = {
+export const NoNotifications: Story = {
   args: {
     title: 'Dashboard',
-    hasNotification: true,
-  },
-};
-
-export const NoNotification: Story = {
-  args: {
-    title: 'Dashboard',
-    hasNotification: false,
+    notifications: [],
+    unreadCount: 0,
   },
 };
 
 export const WithAvatarImage: Story = {
   args: {
     title: 'Dashboard',
-    hasNotification: true,
+    notifications: sampleNotifications,
+    unreadCount: 2,
     user: {
       name: 'Alice Johnson',
       avatarSrc: 'https://i.pravatar.cc/150?img=47',
@@ -81,12 +96,11 @@ export const WithAvatarImage: Story = {
   },
 };
 
-// Shows the full app shell — Sidebar + TopBar together
 export const InAppShell: Story = {
   decorators: [
     (Story) => (
       <div className="flex h-screen">
-        <aside className="w-64 border-r border-border bg-white" />
+        <aside className="w-64 border-r border-border bg-card" />
         <div className="flex flex-1 flex-col">
           <Story />
           <main className="flex-1 bg-surface p-6">
@@ -98,6 +112,7 @@ export const InAppShell: Story = {
   ],
   args: {
     title: 'Tasks',
-    hasNotification: true,
+    notifications: sampleNotifications,
+    unreadCount: 2,
   },
 };

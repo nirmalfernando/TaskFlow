@@ -101,7 +101,7 @@ export function KanbanCard({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        'flex flex-col rounded-card bg-white p-[17px] transition-all cursor-grab active:cursor-grabbing select-none',
+        'flex flex-col rounded-card bg-card p-[17px] transition-all cursor-grab active:cursor-grabbing select-none',
         isDragging
           ? [
               'border border-[#bedbff] opacity-90',

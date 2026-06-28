@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Search, Moon, Bell } from 'lucide-react';
+import { Search, Moon, Sun, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/shared/UserAvatar';
+import { useTheme } from '@/hooks/useTheme';
+import { NotificationPanel } from '@/components/shared/NotificationPanel';
+import type { AppNotification } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,17 +14,22 @@ export interface TopBarUser {
 }
 
 export interface TopBarProps {
-  // Left content — provide one
+  // Left content
   title?: string;
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
 
   // Right actions
   user: TopBarUser;
-  hasNotification?: boolean;
-  onThemeToggle?: () => void;
-  onNotifications?: () => void;
   onProfileClick?: () => void;
+
+  // Notifications
+  notifications?: AppNotification[];
+  unreadCount?: number;
+  notificationsLoading?: boolean;
+  onMarkAllRead?: () => void;
+  onMarkRead?: (id: string) => void;
+  onNotificationClick?: (notification: AppNotification) => void;
 
   className?: string;
 }
@@ -32,23 +40,25 @@ function IconButton({
   onClick,
   label,
   children,
-  badge,
+  badgeCount,
 }: {
   onClick?: () => void;
   label: string;
   children: React.ReactNode;
-  badge?: boolean;
+  badgeCount?: number;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-input border border-input bg-white text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
+      className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-input border border-input bg-card text-text-muted transition-colors hover:bg-surface hover:text-text-primary"
     >
       {children}
-      {badge && (
-        <span className="absolute right-[6px] top-[6px] h-2 w-2 rounded-full border-2 border-white bg-primary" />
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white">
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
       )}
     </button>
   );
@@ -61,13 +71,18 @@ export function TopBar({
   searchPlaceholder = 'Search tasks…',
   onSearch,
   user,
-  hasNotification = false,
-  onThemeToggle,
-  onNotifications,
   onProfileClick,
+  notifications = [],
+  unreadCount = 0,
+  notificationsLoading = false,
+  onMarkAllRead,
+  onMarkRead,
+  onNotificationClick,
   className,
 }: TopBarProps) {
+  const { theme, toggleTheme } = useTheme();
   const [query, setQuery] = useState('');
+  const [notifOpen, setNotifOpen] = useState(false);
   const showSearch = Boolean(onSearch);
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -78,8 +93,7 @@ export function TopBar({
   return (
     <header
       className={cn(
-        'flex h-14 items-center justify-between border-b border-border px-8',
-        'bg-[rgba(250,251,252,0.92)] backdrop-blur-sm',
+        'flex h-14 items-center justify-between border-b border-border bg-card px-8',
         className,
       )}
     >
@@ -94,7 +108,7 @@ export function TopBar({
               onChange={handleSearchChange}
               placeholder={searchPlaceholder}
               className={cn(
-                'h-9 w-full rounded-input border border-input bg-white pl-9 pr-4 text-sm',
+                'h-9 w-full rounded-input border border-input bg-surface pl-9 pr-4 text-sm',
                 'text-text-primary placeholder:text-text-placeholder',
                 'outline-none focus:border-primary focus:ring-2 focus:ring-primary/20',
                 'transition-colors',
@@ -108,13 +122,37 @@ export function TopBar({
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        <IconButton label="Toggle theme" onClick={onThemeToggle}>
-          <Moon className="h-[18px] w-[18px]" />
+        <IconButton label="Toggle theme" onClick={toggleTheme}>
+          {theme === 'dark' ? (
+            <Sun className="h-[18px] w-[18px]" />
+          ) : (
+            <Moon className="h-[18px] w-[18px]" />
+          )}
         </IconButton>
 
-        <IconButton label="Notifications" onClick={onNotifications} badge={hasNotification}>
-          <Bell className="h-4 w-4" />
-        </IconButton>
+        <div className="relative">
+          <IconButton
+            label="Notifications"
+            onClick={() => setNotifOpen((o) => !o)}
+            badgeCount={unreadCount}
+          >
+            <Bell className="h-4 w-4" />
+          </IconButton>
+
+          <NotificationPanel
+            notifications={notifications}
+            unreadCount={unreadCount}
+            loading={notificationsLoading}
+            open={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            onMarkAllRead={() => onMarkAllRead?.()}
+            onMarkRead={(id) => onMarkRead?.(id)}
+            onNotificationClick={(notification) => {
+              setNotifOpen(false);
+              onNotificationClick?.(notification);
+            }}
+          />
+        </div>
 
         <button
           type="button"

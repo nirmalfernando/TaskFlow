@@ -103,7 +103,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
               setDraft(value);
             }
           }}
-          className="flex-1 rounded-input border border-primary bg-white px-3 py-1.5 text-xl font-bold text-text-primary outline-none focus:ring-2 focus:ring-primary/20"
+          className="flex-1 rounded-input border border-primary bg-card px-3 py-1.5 text-xl font-bold text-text-primary outline-none focus:ring-2 focus:ring-primary/20"
         />
         <button
           type="button"
@@ -247,7 +247,7 @@ export function TaskDetailPage() {
         {/* Main content */}
         <div className="flex flex-col gap-5">
           {/* Title */}
-          <div className="rounded-card border border-border bg-white p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <EditableTitle value={task.title} onSave={handleSaveTitle} />
 
             {task.description && (
@@ -271,7 +271,7 @@ export function TaskDetailPage() {
           </div>
 
           {/* Activity */}
-          <div className="rounded-card border border-border bg-white p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Activity</h3>
             {activity.length === 0 ? (
               <p className="text-sm text-text-placeholder">No activity yet.</p>
@@ -318,7 +318,7 @@ export function TaskDetailPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Details */}
-          <div className="rounded-card border border-border bg-white p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Details</h3>
 
             <div className="flex flex-col gap-4">
@@ -331,7 +331,7 @@ export function TaskDetailPage() {
                   <select
                     value={task.status}
                     onChange={(e) => void handleStatusChange(e)}
-                    className="h-9 w-full appearance-none rounded-input border border-input bg-white px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="h-9 w-full appearance-none rounded-input border border-input bg-card px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="OPEN">Open</option>
                     <option value="IN_PROGRESS">In Progress</option>
@@ -351,7 +351,7 @@ export function TaskDetailPage() {
                   <select
                     value={task.priority}
                     onChange={(e) => void handlePriorityChange(e)}
-                    className="h-9 w-full appearance-none rounded-input border border-input bg-white px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="h-9 w-full appearance-none rounded-input border border-input bg-card px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -431,7 +431,7 @@ export function TaskDetailPage() {
             type="button"
             onClick={() => setConfirmDelete(true)}
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-card border border-red-200 bg-white px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50',
+              'flex w-full items-center justify-center gap-2 rounded-card border border-red-200 bg-card px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50',
             )}
           >
             <Trash2 className="h-4 w-4" />

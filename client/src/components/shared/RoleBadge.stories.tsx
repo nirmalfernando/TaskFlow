@@ -31,15 +31,15 @@ export const BothVariants: Story = {
 export const InContext: Story = {
   render: () => (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between rounded-card border border-border bg-white p-4">
+      <div className="flex items-center justify-between rounded-card border border-border bg-card p-4">
         <span className="text-sm font-medium text-text-primary">John Doe</span>
         <RoleBadge role="admin" />
       </div>
-      <div className="flex items-center justify-between rounded-card border border-border bg-white p-4">
+      <div className="flex items-center justify-between rounded-card border border-border bg-card p-4">
         <span className="text-sm font-medium text-text-primary">Sarah Reynolds</span>
         <RoleBadge role="admin" />
       </div>
-      <div className="flex items-center justify-between rounded-card border border-border bg-white p-4">
+      <div className="flex items-center justify-between rounded-card border border-border bg-card p-4">
         <span className="text-sm font-medium text-text-primary">Alex Mitchell</span>
         <RoleBadge role="user" />
       </div>

@@ -84,7 +84,7 @@ function TextInput({
       placeholder={placeholder}
       disabled={disabled}
       className={cn(
-        'h-11 w-full rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
+        'h-11 w-full rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
         'focus:border-primary focus:ring-2 focus:ring-primary/20',
         'disabled:cursor-not-allowed disabled:bg-surface disabled:text-text-placeholder',
         className,
@@ -216,7 +216,7 @@ function ProfileTab() {
   return (
     <div className="flex flex-col gap-6">
       {/* Avatar */}
-      <div className="rounded-card border border-border bg-white p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+      <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
         <h3 className="mb-1 text-sm font-semibold text-text-primary">Profile Photo</h3>
         <p className="mb-4 text-xs text-text-muted">
           This will be displayed in your sidebar, task assignments, and activity feed.
@@ -230,7 +230,7 @@ function ProfileTab() {
       </div>
 
       {/* Name + Email */}
-      <div className="rounded-card border border-border bg-white p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+      <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
         <h3 className="mb-1 text-sm font-semibold text-text-primary">Personal Information</h3>
         <p className="mb-5 text-xs text-text-muted">Update your name shown across the app.</p>
 
@@ -314,7 +314,7 @@ function PasswordInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="h-11 w-full rounded-input border border-input bg-white px-3.5 pr-11 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="h-11 w-full rounded-input border border-input bg-card px-3.5 pr-11 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         <button
           type="button"
@@ -370,7 +370,7 @@ function SecurityTab() {
   }
 
   return (
-    <div className="rounded-card border border-border bg-white p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+    <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
       <div className="mb-1 flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#eff6ff]">
           <KeyRound className="h-4 w-4 text-primary" />

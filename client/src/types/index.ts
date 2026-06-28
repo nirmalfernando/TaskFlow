@@ -104,3 +104,17 @@ export interface UpdateTaskPayload {
   dueDate?: string | null;
   assignedToId?: string | null;
 }
+
+// ─── Notification types ───────────────────────────────────────────────────────
+
+export type NotificationType = 'assigned' | 'due_today';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  taskId: string;
+  taskTitle: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}

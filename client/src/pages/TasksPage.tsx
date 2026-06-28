@@ -87,7 +87,7 @@ function FilterSelect<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T | '')}
-        className="h-[34px] appearance-none rounded-full border border-input bg-white pl-3.5 pr-8 text-sm font-medium text-text-secondary transition-colors hover:bg-surface focus:outline-none focus:border-primary"
+        className="h-[34px] appearance-none rounded-full border border-input bg-card pl-3.5 pr-8 text-sm font-medium text-text-secondary transition-colors hover:bg-surface focus:outline-none focus:border-primary"
       >
         {value === '' && <option value="">{label}</option>}
         {options.map((o) => (
@@ -109,7 +109,7 @@ function ViewToggle({
   onChange: (v: 'list' | 'kanban') => void;
 }) {
   return (
-    <div className="flex gap-0.5 rounded-nav border border-input bg-white p-0.5">
+    <div className="flex gap-0.5 rounded-nav border border-input bg-card p-0.5">
       <button
         type="button"
         onClick={() => onChange('list')}
@@ -158,7 +158,7 @@ function PaginationButton({
         'flex h-8 w-8 items-center justify-center rounded-nav border text-sm font-medium transition-colors',
         active
           ? 'border-transparent bg-primary text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2)]'
-          : 'border-input bg-white text-text-muted hover:bg-surface',
+          : 'border-input bg-card text-text-muted hover:bg-surface',
         disabled && 'pointer-events-none opacity-40',
       )}
     >
@@ -222,7 +222,7 @@ function DropLine({ active }: { active: boolean }) {
       {active && (
         <>
           <div className="absolute inset-0 rounded-full bg-primary" />
-          <div className="absolute -left-0.5 -top-[3px] h-2 w-2 rounded-full border-2 border-primary bg-white" />
+          <div className="absolute -left-0.5 -top-[3px] h-2 w-2 rounded-full border-2 border-primary bg-card" />
         </>
       )}
     </div>
@@ -414,7 +414,7 @@ function KanbanBoard({
               <button
                 type="button"
                 onClick={onAddCard}
-                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-xs font-medium text-text-placeholder transition-colors hover:bg-white hover:border-border hover:text-text-muted"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-transparent px-3 py-2.5 text-xs font-medium text-text-placeholder transition-colors hover:bg-card hover:border-border hover:text-text-muted"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add card
@@ -508,7 +508,7 @@ export function TasksPage() {
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search tasks..."
-            className="h-9 w-full rounded-input border border-input bg-white pl-9 pr-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="h-9 w-full rounded-input border border-input bg-card pl-9 pr-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
@@ -538,7 +538,7 @@ export function TasksPage() {
 
         <button
           type="button"
-          className="flex h-9 items-center gap-1.5 rounded-nav border border-[#bedbff] bg-white px-4 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
+          className="flex h-9 items-center gap-1.5 rounded-nav border border-[#bedbff] bg-card px-4 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
         >
           <Sparkles className="h-4 w-4" />
           Create with AI
@@ -586,7 +586,7 @@ export function TasksPage() {
 
       {/* Table */}
       {!loading && view === 'list' && (
-        <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
           {tasks.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-sm font-medium text-text-muted">No tasks found.</p>

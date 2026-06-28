@@ -19,7 +19,7 @@ export function AdminStatCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-4 rounded-card border border-border bg-white p-[17px]',
+        'flex items-center gap-4 rounded-card border border-border bg-card p-[17px]',
         'shadow-[0px_1px_2px_rgba(0,0,0,0.05)]',
         className,
       )}

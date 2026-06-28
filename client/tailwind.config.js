@@ -4,24 +4,26 @@ export default {
     './src/**/*.{js,ts,jsx,tsx}',
     './.storybook/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         primary: {
           DEFAULT: '#2b7fff',
-          light: '#eff6ff',
+          light: 'rgb(var(--color-primary-light) / <alpha-value>)',
         },
         text: {
-          primary: '#101828',
-          dark: '#1e2939',
-          muted: '#6a7282',
-          label: '#364153',
-          placeholder: '#99a1af',
-          secondary: '#4a5565',
+          primary: 'var(--color-text-primary)',
+          dark: 'var(--color-text-dark)',
+          muted: 'var(--color-text-muted)',
+          label: 'var(--color-text-label)',
+          placeholder: 'var(--color-text-placeholder)',
+          secondary: 'var(--color-text-secondary)',
         },
-        border: '#f3f4f6',
-        surface: '#f9fafb',
-        input: '#e5e7eb',
+        border: 'var(--color-border)',
+        surface: 'var(--color-surface)',
+        card: 'var(--color-card)',
+        input: 'var(--color-input)',
         success: '#00bc7d',
       },
       borderRadius: {

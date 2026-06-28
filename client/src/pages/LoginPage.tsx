@@ -53,7 +53,7 @@ export function LoginPage() {
           'linear-gradient(148.73deg, #fafbfc 0%, #fcfcfd 16.667%, #fdfefe 33.333%, #fff 50%, #fdfeff 57.143%, #fafcff 64.286%, #f8fbff 71.429%, #f6faff 78.571%, #f4f9ff 85.714%, #f1f7ff 92.857%, #eff6ff 100%)',
       }}
     >
-      <div className="bg-white border border-border rounded-auth-card shadow-auth-card w-full max-w-[440px] p-[41px]">
+      <div className="bg-card border border-border rounded-auth-card shadow-auth-card w-full max-w-[440px] p-[41px]">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-6">
           <div className="h-11 w-11 rounded-logo-lg bg-primary shadow-logo-lg flex items-center justify-center">
@@ -90,7 +90,7 @@ export function LoginPage() {
               autoComplete="email"
               {...register('email')}
               className={cn(
-                'h-11 w-full rounded-input border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
+                'h-11 w-full rounded-input border bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
                 'focus:border-primary focus:ring-2 focus:ring-primary/20',
                 errors.email ? 'border-red-400' : 'border-input',
               )}
@@ -111,7 +111,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 {...register('password')}
                 className={cn(
-                  'h-11 w-full rounded-input border bg-white pl-3.5 pr-10 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
+                  'h-11 w-full rounded-input border bg-card pl-3.5 pr-10 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors',
                   'focus:border-primary focus:ring-2 focus:ring-primary/20',
                   errors.password ? 'border-red-400' : 'border-input',
                 )}

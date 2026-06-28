@@ -69,7 +69,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className={cn(
-        'h-11 w-full rounded-input border bg-white px-[13px] text-sm text-text-primary outline-none transition-colors',
+        'h-11 w-full rounded-input border bg-card px-[13px] text-sm text-text-primary outline-none transition-colors',
         'placeholder:text-text-placeholder',
         'focus:border-primary focus:ring-2 focus:ring-primary/20',
         hasError ? 'border-red-400' : 'border-input',
@@ -99,7 +99,7 @@ function PasswordInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'h-11 w-full rounded-input border bg-white pl-[13px] pr-10 text-sm text-text-primary outline-none transition-colors',
+          'h-11 w-full rounded-input border bg-card pl-[13px] pr-10 text-sm text-text-primary outline-none transition-colors',
           'placeholder:text-text-placeholder',
           'focus:border-primary focus:ring-2 focus:ring-primary/20',
           hasError ? 'border-red-400' : 'border-input',
@@ -225,7 +225,7 @@ export function AuthCard({
   const isSignUp = mode === 'signup';
 
   return (
-    <div className="w-full max-w-[440px] rounded-auth-card border border-border bg-white p-[41px] shadow-auth-card">
+    <div className="w-full max-w-[440px] rounded-auth-card border border-border bg-card p-[41px] shadow-auth-card">
       {/* Logo */}
       <div className="mb-6 flex flex-col items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-logo-lg bg-primary shadow-logo-lg">
@@ -336,7 +336,7 @@ export function AuthCard({
         <button
           type="button"
           onClick={onGoogleAuth}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-input border border-input bg-white text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-input border border-input bg-card text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
         >
           <GoogleIcon />
           Continue with Google

@@ -67,7 +67,7 @@ function PriorityDistributionCard({ tasks }: { tasks: Task[] }) {
   ] as const;
 
   return (
-    <div className="flex flex-col gap-6 rounded-card border border-border bg-white p-[25px] shadow-[0px_1px_2px_rgba(0,0,0,0.06)]">
+    <div className="flex flex-col gap-6 rounded-card border border-border bg-card p-[25px] shadow-[0px_1px_2px_rgba(0,0,0,0.06)]">
       <CardHeader title="Priority Distribution" subtitle={`Across all ${total} tasks`} />
 
       <div className="flex flex-col gap-5">
@@ -135,7 +135,7 @@ function TasksByStatusCard({ tasks }: { tasks: Task[] }) {
   }));
 
   return (
-    <div className="flex flex-col gap-6 rounded-card border border-border bg-white p-[25px] shadow-[0px_1px_2px_rgba(0,0,0,0.06)]">
+    <div className="flex flex-col gap-6 rounded-card border border-border bg-card p-[25px] shadow-[0px_1px_2px_rgba(0,0,0,0.06)]">
       <CardHeader title="Tasks by Status" subtitle="Current overview" />
 
       <div className="relative mx-auto h-[200px] w-full max-w-[220px]">

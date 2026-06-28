@@ -8,7 +8,7 @@ const meta: Meta<typeof TaskTableRow> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div className="rounded-card border border-border bg-white overflow-hidden w-[900px]">
+      <div className="rounded-card border border-border bg-card overflow-hidden w-[900px]">
         <table className="w-full border-collapse">
           <TaskTableHeader />
           <tbody>
@@ -160,7 +160,7 @@ const SAMPLE_TASKS = [
 export const FullTable: Story = {
   decorators: [
     (Story) => (
-      <div className="rounded-card border border-border bg-white overflow-hidden w-[900px]">
+      <div className="rounded-card border border-border bg-card overflow-hidden w-[900px]">
         <table className="w-full border-collapse">
           <TaskTableHeader />
           <tbody>

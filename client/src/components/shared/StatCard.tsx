@@ -54,7 +54,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-card bg-white p-[25px]',
+        'flex flex-col gap-4 rounded-card bg-card p-[25px]',
         'border border-border shadow-[0px_1px_2px_rgba(0,0,0,0.06)]',
         className,
       )}

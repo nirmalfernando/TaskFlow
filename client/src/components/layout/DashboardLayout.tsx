@@ -3,6 +3,8 @@ import { LayoutDashboard, CheckSquare, Users, Settings } from 'lucide-react';
 import { Sidebar, type SidebarNavItem } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
+import type { AppNotification } from '@/types';
 
 const NAV_TO_PATH: Record<string, string> = {
   dashboard: '/dashboard',
@@ -32,6 +34,13 @@ export function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAllRead,
+    markRead,
+  } = useNotifications();
 
   const activeNav = PATH_TO_NAV[location.pathname] ?? 'dashboard';
 
@@ -43,6 +52,10 @@ export function DashboardLayout() {
   function handleNavChange(key: string) {
     const path = NAV_TO_PATH[key];
     if (path) navigate(path);
+  }
+
+  function handleNotificationClick(notification: AppNotification) {
+    navigate(`/tasks/${notification.taskId}`);
   }
 
   const fullName = user ? `${user.firstName} ${user.lastName}` : '';
@@ -66,6 +79,12 @@ export function DashboardLayout() {
         <TopBar
           user={{ name: fullName, avatarSrc: user?.avatarUrl ?? undefined }}
           onProfileClick={() => navigate('/settings')}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          notificationsLoading={notificationsLoading}
+          onMarkAllRead={markAllRead}
+          onMarkRead={markRead}
+          onNotificationClick={handleNotificationClick}
         />
         <main className="flex-1 overflow-y-auto p-8">
           <Outlet />

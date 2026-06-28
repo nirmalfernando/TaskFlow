@@ -112,7 +112,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={handleClose} />
 
-      <div className="relative z-10 w-full max-w-[480px] rounded-[20px] border border-border bg-white shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
+      <div className="relative z-10 w-full max-w-[480px] rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#dbeafe]">
@@ -141,7 +141,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
-                className="h-11 rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-11 rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -154,7 +154,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
-                className="h-11 rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-11 rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -170,7 +170,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jane@company.com"
-              className="h-11 rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-11 rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -184,7 +184,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
                 id="inv-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="h-11 w-full appearance-none rounded-input border border-input bg-white px-3.5 pr-10 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-10 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <option value="USER">User</option>
                 <option value="ADMIN">Admin</option>
@@ -205,7 +205,7 @@ function InviteModal({ open, onClose, onSuccess }: InviteModalProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min 8 chars, upper, lower, number"
-                className="h-11 w-full rounded-input border border-input bg-white px-3.5 pr-11 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="h-11 w-full rounded-input border border-input bg-card px-3.5 pr-11 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
               <button
                 type="button"
@@ -316,7 +316,7 @@ function RowMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-9 z-20 min-w-[170px] rounded-card border border-border bg-white py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]">
+        <div className="absolute right-0 top-9 z-20 min-w-[170px] rounded-card border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]">
           {!isSelf && (
             <>
               <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.55px] text-text-placeholder">
@@ -465,7 +465,7 @@ export function AdminUsersPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="flex items-center gap-4 rounded-card border border-border bg-white p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-4 rounded-card border border-border bg-card p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#eff6ff]">
             <Users className="h-5 w-5 text-primary" />
           </div>
@@ -475,7 +475,7 @@ export function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 rounded-card border border-border bg-white p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-4 rounded-card border border-border bg-card p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#f5f3ff]">
             <Shield className="h-5 w-5 text-violet-500" />
           </div>
@@ -485,7 +485,7 @@ export function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 rounded-card border border-border bg-white p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-4 rounded-card border border-border bg-card p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#ecfdf5]">
             <Activity className="h-5 w-5 text-emerald-500" />
           </div>
@@ -504,7 +504,7 @@ export function AdminUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className="h-10 w-full rounded-input border border-input bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="h-10 w-full rounded-input border border-input bg-card pl-10 pr-4 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         {search && (
           <button
@@ -518,7 +518,7 @@ export function AdminUsersPage() {
       </div>
 
       {/* Users table */}
-      <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
+      <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-text-placeholder" />

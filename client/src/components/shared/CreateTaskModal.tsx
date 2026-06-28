@@ -125,7 +125,7 @@ function DatePickerPopover({ value, onChange }: DatePickerProps) {
         type="button"
         onClick={handleOpen}
         className={cn(
-          'flex h-11 w-full items-center gap-2 rounded-input border bg-white px-3.5 text-sm outline-none transition-colors',
+          'flex h-11 w-full items-center gap-2 rounded-input border bg-card px-3.5 text-sm outline-none transition-colors',
           open
             ? 'border-primary ring-2 ring-primary/20'
             : 'border-input text-text-primary hover:border-primary/50',
@@ -151,7 +151,7 @@ function DatePickerPopover({ value, onChange }: DatePickerProps) {
       </button>
 
       {open && (
-        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-[280px] rounded-[14px] border border-border bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
+        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-[280px] rounded-[14px] border border-border bg-card shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
           {/* Month nav */}
           <div className="flex items-center justify-between px-4 py-3">
             <button
@@ -275,7 +275,7 @@ function AssigneeSelect({ users, value, onChange, currentUserId, loading }: Assi
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex h-11 w-full items-center gap-2 rounded-input border bg-white px-3.5 text-sm outline-none transition-colors',
+          'flex h-11 w-full items-center gap-2 rounded-input border bg-card px-3.5 text-sm outline-none transition-colors',
           open
             ? 'border-primary ring-2 ring-primary/20'
             : 'border-input text-text-primary hover:border-primary/50',
@@ -309,7 +309,7 @@ function AssigneeSelect({ users, value, onChange, currentUserId, loading }: Assi
       </button>
 
       {open && (
-        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-full rounded-[12px] border border-border bg-white py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
+        <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-full rounded-[12px] border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.12)]">
           {/* Unassigned option */}
           <button
             type="button"
@@ -474,7 +474,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={handleClose} />
 
       {/* Panel */}
-      <div className="relative z-10 w-full max-w-[540px] rounded-[20px] border border-border bg-white shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
+      <div className="relative z-10 w-full max-w-[540px] rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#dbeafe]">
@@ -511,12 +511,12 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
                   placeholder="Describe your task naturally..."
-                  className="h-[80px] w-full resize-none rounded-[10px] border border-[#bedbff] bg-white px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-[80px] w-full resize-none rounded-[10px] border border-[#bedbff] bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
                 <div className="mt-3 flex items-center gap-2">
                   <button
                     type="button"
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-white px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-card px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
                   >
                     <Mic className="h-3.5 w-3.5" />
                     Voice
@@ -546,7 +546,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   <Sparkles className="h-3.5 w-3.5 text-green-500" />
                 </div>
 
-                <div className="mb-3 rounded-[10px] border border-border bg-white p-3.5">
+                <div className="mb-3 rounded-[10px] border border-border bg-card p-3.5">
                   <p className="text-sm font-semibold text-text-primary">{parsedTask.title}</p>
                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-placeholder">
                     {parsedTask.description}
@@ -564,7 +564,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   <button
                     type="button"
                     onClick={handleTryAgain}
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-white px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-card px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
                   >
                     Try Again
                   </button>
@@ -599,7 +599,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Task title..."
-              className="h-11 w-full rounded-input border border-input bg-white px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-11 w-full rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -613,7 +613,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description..."
-              className="h-[90px] w-full resize-none rounded-input border border-input bg-white px-3.5 py-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-[90px] w-full resize-none rounded-input border border-input bg-card px-3.5 py-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -628,7 +628,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   id="task-priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as Priority)}
-                  className="h-11 w-full appearance-none rounded-input border border-input bg-white px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -647,7 +647,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   id="task-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                  className="h-11 w-full appearance-none rounded-input border border-input bg-white px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="open">Open</option>
                   <option value="in-progress">In Progress</option>

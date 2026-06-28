@@ -129,7 +129,7 @@ export function Sidebar({
   className,
 }: SidebarProps) {
   return (
-    <aside className={cn('flex h-full w-64 flex-col border-r border-border bg-white', className)}>
+    <aside className={cn('flex h-full w-64 flex-col border-r border-border bg-card', className)}>
       <Logo />
 
       <nav className="flex-1 overflow-y-auto px-3 pt-4 flex flex-col gap-0.5">

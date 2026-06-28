@@ -9,7 +9,7 @@ const meta: Meta<typeof AdminUserTableRow> = {
   parameters: { layout: 'fullscreen' },
   decorators: [
     (Story) => (
-      <div className="bg-white">
+      <div className="bg-card">
         <table className="w-full border-collapse">
           <AdminUserTableHeader />
           <tbody>
@@ -158,7 +158,7 @@ const USERS: AdminUserData[] = [
 export const FullTable: StoryObj = {
   name: 'Full Table (matches Figma)',
   render: () => (
-    <div className="overflow-hidden rounded-card border border-border bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]">
+    <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]">
       <table className="w-full border-collapse">
         <AdminUserTableHeader />
         <tbody>
