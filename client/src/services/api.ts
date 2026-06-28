@@ -18,7 +18,7 @@ export const tokenStorage = {
 };
 
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${import.meta.env.VITE_API_URL ?? ''}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -60,9 +60,12 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const { data } = await axios.post<ApiResponse<AuthTokens>>('/api/v1/auth/refresh', {
-        refreshToken,
-      });
+      const { data } = await axios.post<ApiResponse<AuthTokens>>(
+        `${import.meta.env.VITE_API_URL ?? ''}/api/v1/auth/refresh`,
+        {
+          refreshToken,
+        },
+      );
       tokenStorage.set(data.data);
       processQueue(null, data.data.accessToken);
       original.headers.Authorization = `Bearer ${data.data.accessToken}`;
