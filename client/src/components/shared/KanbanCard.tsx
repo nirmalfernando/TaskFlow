@@ -5,6 +5,22 @@ import { PriorityBadge, type Priority } from './PriorityBadge';
 import { StatusBadge, type TaskStatus } from './StatusBadge';
 import { UserAvatar } from './UserAvatar';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function stripMarkdown(md: string): string {
+  return md
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^>\s*/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim();
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface KanbanCardData {
@@ -126,7 +142,7 @@ export function KanbanCard({
       {/* Description */}
       {description && (
         <p className="mt-2 text-xs leading-relaxed text-text-placeholder line-clamp-2">
-          {description}
+          {stripMarkdown(description)}
         </p>
       )}
 

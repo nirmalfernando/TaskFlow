@@ -51,6 +51,7 @@ interface ParsedTask {
 
 export interface CreateTaskModalProps {
   open: boolean;
+  autoFocusAi?: boolean;
   onClose: () => void;
   onCreateTask?: (payload: CreateTaskPayload) => Promise<unknown>;
 }
@@ -371,7 +372,12 @@ function AssigneeSelect({ users, value, onChange, currentUserId, loading }: Assi
 
 // ─── CreateTaskModal ──────────────────────────────────────────────────────────
 
-export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModalProps) {
+export function CreateTaskModal({
+  open,
+  autoFocusAi,
+  onClose,
+  onCreateTask,
+}: CreateTaskModalProps) {
   const { user: currentUser } = useAuth();
 
   const [aiState, setAiState] = useState<AiState>('idle');
@@ -503,9 +509,12 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={handleClose} />
 
       {/* Panel */}
-      <div className="relative z-10 w-full max-w-[540px] rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
+      <div
+        className="relative z-10 flex w-full max-w-[540px] flex-col rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]"
+        style={{ maxHeight: 'min(85vh, 760px)' }}
+      >
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+        <div className="flex shrink-0 items-center gap-3 border-b border-border px-6 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary-light">
             <Plus className="h-[18px] w-[18px] text-primary" />
           </div>
@@ -520,241 +529,246 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
           </button>
         </div>
 
-        {/* AI Task Assistant */}
-        <div className="px-6 pt-5">
-          <div className="rounded-[14px] bg-primary-light p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-text-primary">AI Task Assistant</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-[#dcfce7] px-2.5 py-1">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <span className="text-xs font-medium text-green-600">Voice Enabled</span>
-              </div>
-            </div>
-
-            {aiState !== 'parsed' && (
-              <>
-                <textarea
-                  value={voiceState === 'processing' ? '' : aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  placeholder={
-                    voiceState === 'recording'
-                      ? 'Listening…'
-                      : voiceState === 'processing'
-                        ? 'Transcribing…'
-                        : 'Describe your task naturally…'
-                  }
-                  disabled={isVoiceActive}
-                  className="h-[80px] w-full resize-none rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
-                />
-                {aiError && <p className="mt-1.5 text-xs text-red-500">{aiError}</p>}
-                <div className="mt-3 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (voiceState === 'recording') {
-                        stopRecording();
-                      } else if (voiceState === 'idle' || voiceState === 'error') {
-                        void startRecording();
-                      }
-                    }}
-                    disabled={voiceState === 'processing'}
-                    className={cn(
-                      'flex h-8 items-center gap-1.5 rounded-nav border px-3.5 text-sm font-medium transition-colors disabled:opacity-50',
-                      voiceState === 'recording'
-                        ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
-                        : 'border-input bg-card text-text-secondary hover:bg-surface',
-                    )}
-                  >
-                    {voiceState === 'recording' ? (
-                      <>
-                        <span className="relative flex h-3.5 w-3.5">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                          <MicOff className="relative h-3.5 w-3.5" />
-                        </span>
-                        Stop
-                      </>
-                    ) : voiceState === 'processing' ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Transcribing…
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="h-3.5 w-3.5" />
-                        Voice
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleParseTask()}
-                    disabled={!aiInput.trim() || aiState === 'parsing' || isVoiceActive}
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
-                  >
-                    {aiState === 'parsing' ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Parsing…
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Parse Task
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {aiState === 'parsed' && parsedTask && (
-              <>
-                <div className="mb-3 flex items-center justify-between rounded-[10px] bg-[#dcfce7] px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-green-600" />
-                    <span className="text-xs font-medium text-green-700">
-                      Task parsed successfully
-                    </span>
-                  </div>
-                  <Sparkles className="h-3.5 w-3.5 text-green-500" />
-                </div>
-
-                <div className="mb-3 rounded-[10px] border border-border bg-card p-3.5">
-                  <p className="text-sm font-semibold text-text-primary">{parsedTask.title}</p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-placeholder">
-                    {parsedTask.description}
-                  </p>
-                  <div className="mt-2.5 flex items-center gap-1.5">
-                    <PriorityBadge priority={parsedTask.priority} />
-                    <StatusBadge status={parsedTask.status} />
-                    <span className="ml-auto text-xs text-text-placeholder">
-                      {parsedTask.dueDate}
-                    </span>
-                  </div>
-                </div>
-
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto">
+          {/* AI Task Assistant */}
+          <div className="px-6 pt-5">
+            <div className="rounded-[14px] bg-primary-light p-4">
+              <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleTryAgain}
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-card px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
-                  >
-                    Try Again
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleUseTask}
-                    className="flex h-8 items-center gap-1.5 rounded-nav bg-primary px-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
-                  >
-                    Use This Task
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-text-primary">AI Task Assistant</span>
                 </div>
-
-                <p className="mt-3 text-center text-xs text-text-placeholder">
-                  or fill in manually
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Form fields */}
-        <div className="flex flex-col gap-4 px-6 pt-5">
-          {/* Title */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-label" htmlFor="task-title">
-              Title <span className="text-red-400">*</span>
-            </label>
-            <input
-              id="task-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Task title..."
-              className="h-11 w-full rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-label">Description</label>
-            <RichTextInput
-              value={description}
-              onChange={setDescription}
-              placeholder="Add a description…"
-            />
-          </div>
-
-          {/* Priority / Status row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-label" htmlFor="task-priority">
-                Priority
-              </label>
-              <div className="relative">
-                <select
-                  id="task-priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as Priority)}
-                  className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
+                <div className="flex items-center gap-1.5 rounded-full bg-[#dcfce7] px-2.5 py-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="text-xs font-medium text-green-600">Voice Enabled</span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-label" htmlFor="task-status">
-                Status
-              </label>
-              <div className="relative">
-                <select
-                  id="task-status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                  className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="open">Open</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="testing">Testing</option>
-                  <option value="done">Done</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
-              </div>
+              {aiState !== 'parsed' && (
+                <>
+                  <textarea
+                    autoFocus={autoFocusAi}
+                    value={voiceState === 'processing' ? '' : aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    placeholder={
+                      voiceState === 'recording'
+                        ? 'Listening…'
+                        : voiceState === 'processing'
+                          ? 'Transcribing…'
+                          : 'Describe your task naturally…'
+                    }
+                    disabled={isVoiceActive}
+                    className="h-[80px] w-full resize-none rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+                  />
+                  {aiError && <p className="mt-1.5 text-xs text-red-500">{aiError}</p>}
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (voiceState === 'recording') {
+                          stopRecording();
+                        } else if (voiceState === 'idle' || voiceState === 'error') {
+                          void startRecording();
+                        }
+                      }}
+                      disabled={voiceState === 'processing'}
+                      className={cn(
+                        'flex h-8 items-center gap-1.5 rounded-nav border px-3.5 text-sm font-medium transition-colors disabled:opacity-50',
+                        voiceState === 'recording'
+                          ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
+                          : 'border-input bg-card text-text-secondary hover:bg-surface',
+                      )}
+                    >
+                      {voiceState === 'recording' ? (
+                        <>
+                          <span className="relative flex h-3.5 w-3.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                            <MicOff className="relative h-3.5 w-3.5" />
+                          </span>
+                          Stop
+                        </>
+                      ) : voiceState === 'processing' ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Transcribing…
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-3.5 w-3.5" />
+                          Voice
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleParseTask()}
+                      disabled={!aiInput.trim() || aiState === 'parsing' || isVoiceActive}
+                      className="flex h-8 items-center gap-1.5 rounded-nav border border-input px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
+                    >
+                      {aiState === 'parsing' ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Parsing…
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Parse Task
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {aiState === 'parsed' && parsedTask && (
+                <>
+                  <div className="mb-3 flex items-center justify-between rounded-[10px] bg-[#dcfce7] px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-xs font-medium text-green-700">
+                        Task parsed successfully
+                      </span>
+                    </div>
+                    <Sparkles className="h-3.5 w-3.5 text-green-500" />
+                  </div>
+
+                  <div className="mb-3 rounded-[10px] border border-border bg-card p-3.5">
+                    <p className="text-sm font-semibold text-text-primary">{parsedTask.title}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-placeholder">
+                      {parsedTask.description}
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-1.5">
+                      <PriorityBadge priority={parsedTask.priority} />
+                      <StatusBadge status={parsedTask.status} />
+                      <span className="ml-auto text-xs text-text-placeholder">
+                        {parsedTask.dueDate}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleTryAgain}
+                      className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-card px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUseTask}
+                      className="flex h-8 items-center gap-1.5 rounded-nav bg-primary px-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+                    >
+                      Use This Task
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-center text-xs text-text-placeholder">
+                    or fill in manually
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Assignee / Due Date row */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Form fields */}
+          <div className="flex flex-col gap-4 px-6 pt-5">
+            {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-label">Assignee</label>
-              <AssigneeSelect
-                users={users}
-                value={assigneeId}
-                onChange={setAssigneeId}
-                currentUserId={currentUser?.id ?? ''}
-                loading={usersLoading}
+              <label className="text-sm font-medium text-text-label" htmlFor="task-title">
+                Title <span className="text-red-400">*</span>
+              </label>
+              <input
+                id="task-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Task title..."
+                className="h-11 w-full rounded-input border border-input bg-card px-3.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
+            {/* Description */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-label">Due Date</label>
-              <DatePickerPopover value={dueDate} onChange={setDueDate} />
+              <label className="text-sm font-medium text-text-label">Description</label>
+              <RichTextInput
+                value={description}
+                onChange={setDescription}
+                placeholder="Add a description…"
+              />
             </div>
-          </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+            {/* Priority / Status row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-label" htmlFor="task-priority">
+                  Priority
+                </label>
+                <div className="relative">
+                  <select
+                    id="task-priority"
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as Priority)}
+                    className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-label" htmlFor="task-status">
+                  Status
+                </label>
+                <div className="relative">
+                  <select
+                    id="task-status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                    className="h-11 w-full appearance-none rounded-input border border-input bg-card px-3.5 pr-9 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="open">Open</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="testing">Testing</option>
+                    <option value="done">Done</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
+                </div>
+              </div>
+            </div>
+
+            {/* Assignee / Due Date row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-label">Assignee</label>
+                <AssigneeSelect
+                  users={users}
+                  value={assigneeId}
+                  onChange={setAssigneeId}
+                  currentUserId={currentUser?.id ?? ''}
+                  loading={usersLoading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-label">Due Date</label>
+                <DatePickerPopover value={dueDate} onChange={setDueDate} />
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
         </div>
+        {/* end scrollable body */}
 
         {/* Footer */}
-        <div className="mt-5 flex items-center justify-end gap-2.5 border-t border-border px-6 py-4">
+        <div className="shrink-0 flex items-center justify-end gap-2.5 border-t border-border px-6 py-4">
           <button
             type="button"
             onClick={handleClose}

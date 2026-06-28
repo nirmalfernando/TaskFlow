@@ -43,7 +43,10 @@ export function DashboardLayout() {
     refetch: refetchNotifications,
   } = useNotifications();
 
-  const activeNav = PATH_TO_NAV[location.pathname] ?? 'dashboard';
+  const activeNav =
+    PATH_TO_NAV[location.pathname] ??
+    Object.entries(PATH_TO_NAV).find(([path]) => location.pathname.startsWith(path + '/'))?.[1] ??
+    'tasks';
 
   const navItems: SidebarNavItem[] =
     user?.role === 'ADMIN'

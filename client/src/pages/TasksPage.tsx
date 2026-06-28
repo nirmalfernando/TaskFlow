@@ -17,6 +17,7 @@ import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { KanbanCard } from '@/components/shared/KanbanCard';
 import { CreateTaskModal } from '@/components/shared/CreateTaskModal';
+import { TaskDetailDrawer } from '@/components/shared/TaskDetailDrawer';
 import { cn } from '@/lib/utils';
 import { useTasks } from '@/hooks/useTasks';
 import type { Task, TaskStatusBackend, PriorityBackend, UpdateTaskPayload } from '@/types';
@@ -261,17 +262,21 @@ function KanbanBoard({
   tasks,
   onStatusChange,
   onAddCard,
+  onCardClick,
 }: {
   tasks: Task[];
   onStatusChange: (id: string, status: TaskStatusBackend) => void;
   onAddCard: () => void;
+  onCardClick: (id: string) => void;
 }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const didDragRef = { current: false };
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatusBackend | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const dragEnterCounters = useState<Partial<Record<TaskStatusBackend, number>>>(() => ({}))[0];
 
   const handleDragStart = (taskId: string) => (e: React.DragEvent) => {
+    didDragRef.current = true;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', taskId);
     requestAnimationFrame(() => setDraggingId(taskId));
@@ -279,6 +284,9 @@ function KanbanBoard({
 
   const handleDragEnd = () => {
     setDraggingId(null);
+    setTimeout(() => {
+      didDragRef.current = false;
+    }, 0);
     setDragOverColumn(null);
     setDropIndex(null);
     Object.keys(dragEnterCounters).forEach((k) => {
@@ -401,6 +409,9 @@ function KanbanBoard({
                               isDragging={draggingId === task.id}
                               onDragStart={handleDragStart(task.id)}
                               onDragEnd={handleDragEnd}
+                              onClick={() => {
+                                if (!didDragRef.current) onCardClick(task.id);
+                              }}
                             />
                           </div>
                           {isDragging && <DropLine active={isDropTarget && dropIndex === i + 1} />}
@@ -441,6 +452,8 @@ export function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<TaskStatusBackend | ''>('');
   const [priorityFilter, setPriorityFilter] = useState<PriorityBackend | ''>('');
   const [showModal, setShowModal] = useState(() => searchParams.get('new') === '1');
+  const [modalAiFocus, setModalAiFocus] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get('new') === '1') {
@@ -538,6 +551,10 @@ export function TasksPage() {
 
         <button
           type="button"
+          onClick={() => {
+            setModalAiFocus(true);
+            setShowModal(true);
+          }}
           className="flex h-9 items-center gap-1.5 rounded-nav border border-[#bedbff] bg-card px-4 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
         >
           <Sparkles className="h-4 w-4" />
@@ -554,10 +571,17 @@ export function TasksPage() {
         </button>
       </div>
 
+      {/* Task detail drawer */}
+      <TaskDetailDrawer taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} />
+
       {/* Create Task modal */}
       <CreateTaskModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        autoFocusAi={modalAiFocus}
+        onClose={() => {
+          setShowModal(false);
+          setModalAiFocus(false);
+        }}
         onCreateTask={createTask}
       />
 
@@ -581,6 +605,7 @@ export function TasksPage() {
           tasks={tasks}
           onStatusChange={(id, status) => void handleStatusChange(id, status)}
           onAddCard={() => setShowModal(true)}
+          onCardClick={(id) => setSelectedTaskId(id)}
         />
       )}
 
