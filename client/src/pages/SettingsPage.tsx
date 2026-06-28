@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme, type Theme } from '@/hooks/useTheme';
 import { UserAvatar } from '@/components/shared/UserAvatar';
+import { NOTIF_PREFS_KEY, NOTIF_PREFS_CHANGED_EVENT } from '@/hooks/useNotifications';
 
 // ─── Shared primitives ─────────────────────────────────────────────────────────
 
@@ -459,8 +460,6 @@ function SecuritySection() {
 
 // ─── Placeholder sections ──────────────────────────────────────────────────────
 
-const NOTIF_PREFS_KEY = 'taskflow_notification_prefs';
-
 const NOTIF_ITEMS = [
   {
     key: 'taskAssignments',
@@ -510,6 +509,7 @@ function NotificationsSection() {
   useEffect(() => {
     try {
       localStorage.setItem(NOTIF_PREFS_KEY, JSON.stringify(enabled));
+      window.dispatchEvent(new Event(NOTIF_PREFS_CHANGED_EVENT));
     } catch {
       // localStorage unavailable
     }

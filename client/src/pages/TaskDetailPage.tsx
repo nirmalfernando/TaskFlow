@@ -19,6 +19,7 @@ import { UserAvatar } from '@/components/shared/UserAvatar';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { RichTextEditor } from '@/components/shared/RichTextEditor';
 import { RichTextContent } from '@/components/shared/RichTextContent';
+import { toast } from 'sonner';
 import * as taskService from '@/services/task.service';
 import type { Task, ActivityLog, TaskStatusBackend, PriorityBackend } from '@/types';
 
@@ -208,8 +209,23 @@ export function TaskDetailPage() {
     try {
       await taskService.deleteTask(task.id);
       navigate('/tasks');
+    } catch (err: unknown) {
+      const axiosMsg =
+        err !== null &&
+        typeof err === 'object' &&
+        'response' in err &&
+        err.response !== null &&
+        typeof err.response === 'object' &&
+        'data' in err.response &&
+        err.response.data !== null &&
+        typeof err.response.data === 'object' &&
+        'message' in err.response.data
+          ? String((err.response.data as { message: string }).message)
+          : null;
+      toast.error(axiosMsg ?? 'Failed to delete task. You may not have permission.');
     } finally {
       setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
