@@ -18,8 +18,8 @@ const PATH_TO_NAV: Record<string, string> = Object.fromEntries(
 );
 
 const BASE_NAV_ITEMS: SidebarNavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-[18px] w-[18px]" /> },
-  { key: 'tasks', label: 'Tasks', icon: <CheckSquare className="h-[18px] w-[18px]" /> },
+  { key: 'tasks', label: 'Board', icon: <CheckSquare className="h-[18px] w-[18px]" /> },
+  { key: 'dashboard', label: 'Analytics', icon: <LayoutDashboard className="h-[18px] w-[18px]" /> },
   { key: 'settings', label: 'Settings', icon: <Settings className="h-[18px] w-[18px]" /> },
 ];
 
@@ -47,7 +47,7 @@ export function DashboardLayout() {
 
   const navItems: SidebarNavItem[] =
     user?.role === 'ADMIN'
-      ? [BASE_NAV_ITEMS[0], BASE_NAV_ITEMS[1], ADMIN_NAV_ITEM, BASE_NAV_ITEMS[2]]
+      ? [BASE_NAV_ITEMS[0], ADMIN_NAV_ITEM, BASE_NAV_ITEMS[1], BASE_NAV_ITEMS[2]]
       : BASE_NAV_ITEMS;
 
   function handleNavChange(key: string) {

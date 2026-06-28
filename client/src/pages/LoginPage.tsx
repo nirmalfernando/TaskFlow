@@ -36,7 +36,7 @@ export function LoginPage() {
     setServerError('');
     try {
       await login(data);
-      navigate('/dashboard');
+      navigate('/tasks');
     } catch (err) {
       if (isAxiosError(err)) {
         setServerError((err.response?.data as { message?: string })?.message ?? 'Login failed');
