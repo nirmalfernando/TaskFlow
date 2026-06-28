@@ -338,7 +338,8 @@ function SecuritySection() {
 
   const allRulesPassed = PASSWORD_RULES.every((r) => r.test(next));
   const passwordsMatch = next === confirm && confirm.length > 0;
-  const canSubmit = current.length > 0 && allRulesPassed && passwordsMatch;
+  const sameAsCurrent = current.length > 0 && next.length > 0 && next === current;
+  const canSubmit = current.length > 0 && allRulesPassed && passwordsMatch && !sameAsCurrent;
 
   async function handleSubmit() {
     setError('');
@@ -418,7 +419,12 @@ function SecuritySection() {
           placeholder="Repeat new password"
         />
 
-        {confirm.length > 0 && !passwordsMatch && (
+        {sameAsCurrent && (
+          <p className="text-xs text-red-500">
+            New password must be different from your current password.
+          </p>
+        )}
+        {!sameAsCurrent && confirm.length > 0 && !passwordsMatch && (
           <p className="text-xs text-red-500">Passwords do not match.</p>
         )}
         {error && <p className="text-sm text-red-500">{error}</p>}
