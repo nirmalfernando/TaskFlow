@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { toast } from 'sonner';
 import type { AppNotification, Task } from '@/types';
 import * as taskService from '@/services/task.service';
 import { tokenStorage } from '@/services/api';
@@ -127,9 +128,29 @@ export function useNotifications(): UseNotificationsReturn {
     return () => es.close();
   }, [user, refetch]);
 
-  const notifications = user ? tasksToNotifications(tasks, user.id, readIds) : [];
+  const notifications = useMemo(
+    () => (user ? tasksToNotifications(tasks, user.id, readIds) : []),
+    [user, tasks, readIds],
+  );
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Pop a toast the moment a brand-new notification appears (e.g. via SSE).
+  // The first render seeds the "seen" set so we don't toast the initial batch.
+  const seenIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (seenIdsRef.current === null) {
+      seenIdsRef.current = new Set(notifications.map((n) => n.id));
+      return;
+    }
+    const seen = seenIdsRef.current;
+    for (const n of notifications) {
+      if (!seen.has(n.id) && !n.read) {
+        toast(n.message, { id: n.id });
+      }
+    }
+    seenIdsRef.current = new Set(notifications.map((n) => n.id));
+  }, [notifications]);
 
   function markRead(id: string) {
     setReadIds((prev) => {

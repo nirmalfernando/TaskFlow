@@ -14,7 +14,16 @@ export const createApp = (): express.Application => {
   const app = express();
 
   app.use(helmet());
-  app.use(compression());
+  app.use(
+    compression({
+      // Never compress SSE streams — compression buffers chunks and prevents
+      // events from being flushed to the client in real time.
+      filter: (req, res) => {
+        if (res.getHeader('Content-Type') === 'text/event-stream') return false;
+        return compression.filter(req, res);
+      },
+    }),
+  );
   app.use(
     cors({
       origin: env.CORS_ORIGIN,
