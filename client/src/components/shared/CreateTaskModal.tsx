@@ -3,6 +3,7 @@ import {
   X,
   Plus,
   Mic,
+  MicOff,
   Sparkles,
   Check,
   ArrowRight,
@@ -30,7 +31,9 @@ import { cn } from '@/lib/utils';
 import { PriorityBadge, type Priority } from './PriorityBadge';
 import { StatusBadge, type TaskStatus } from './StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import * as userService from '@/services/user.service';
+import * as aiService from '@/services/ai.service';
 import type { CreateTaskPayload, TaskStatusBackend, PriorityBackend, TaskUser } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -373,6 +376,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
   const [aiState, setAiState] = useState<AiState>('idle');
   const [aiInput, setAiInput] = useState('');
   const [parsedTask, setParsedTask] = useState<ParsedTask | null>(null);
+  const [aiError, setAiError] = useState('');
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -386,6 +390,21 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const {
+    voiceState,
+    startRecording,
+    stopRecording,
+    cancel: cancelRecording,
+  } = useVoiceInput({
+    onTranscript: (text) => {
+      setAiInput(text);
+      setAiError('');
+    },
+    onError: (msg) => setAiError(msg),
+  });
+
+  const isVoiceActive = voiceState === 'recording' || voiceState === 'processing';
 
   useEffect(() => {
     if (!open) return;
@@ -402,16 +421,23 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
   const handleParseTask = async () => {
     if (!aiInput.trim()) return;
     setAiState('parsing');
-    await new Promise((r) => setTimeout(r, 1200));
-    setParsedTask({
-      title: 'Redesign User Profile Page',
-      description:
-        'Update avatar upload with drag-and-drop support, add bio section with 280-character limit, and integrate social links (Twitter, LinkedIn, GitHub). Ensure responsive layout across all breakpoints.',
-      priority: 'high',
-      status: 'open',
-      dueDate: 'Jul 4',
-    });
-    setAiState('parsed');
+    setAiError('');
+    try {
+      const result = await aiService.parseTaskFromText(aiInput.trim());
+      setParsedTask({
+        title: result.title,
+        description: result.description,
+        priority: result.priority,
+        status: result.status,
+        dueDate: result.dueDate
+          ? new Date(result.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : '',
+      });
+      setAiState('parsed');
+    } catch {
+      setAiError('Failed to parse task. Please try again.');
+      setAiState('idle');
+    }
   };
 
   const handleUseTask = () => {
@@ -455,9 +481,11 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
   };
 
   const handleClose = () => {
+    cancelRecording();
     setAiState('idle');
     setAiInput('');
     setParsedTask(null);
+    setAiError('');
     setTitle('');
     setDescription('');
     setPriority('medium');
@@ -508,27 +536,74 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
             {aiState !== 'parsed' && (
               <>
                 <textarea
-                  value={aiInput}
+                  value={voiceState === 'processing' ? '' : aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
-                  placeholder="Describe your task naturally..."
-                  className="h-[80px] w-full resize-none rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  placeholder={
+                    voiceState === 'recording'
+                      ? 'Listening…'
+                      : voiceState === 'processing'
+                        ? 'Transcribing…'
+                        : 'Describe your task naturally…'
+                  }
+                  disabled={isVoiceActive}
+                  className="h-[80px] w-full resize-none rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
                 />
+                {aiError && <p className="mt-1.5 text-xs text-red-500">{aiError}</p>}
                 <div className="mt-3 flex items-center gap-2">
                   <button
                     type="button"
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input bg-card px-3.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
+                    onClick={() => {
+                      if (voiceState === 'recording') {
+                        stopRecording();
+                      } else if (voiceState === 'idle' || voiceState === 'error') {
+                        void startRecording();
+                      }
+                    }}
+                    disabled={voiceState === 'processing'}
+                    className={cn(
+                      'flex h-8 items-center gap-1.5 rounded-nav border px-3.5 text-sm font-medium transition-colors disabled:opacity-50',
+                      voiceState === 'recording'
+                        ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
+                        : 'border-input bg-card text-text-secondary hover:bg-surface',
+                    )}
                   >
-                    <Mic className="h-3.5 w-3.5" />
-                    Voice
+                    {voiceState === 'recording' ? (
+                      <>
+                        <span className="relative flex h-3.5 w-3.5">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                          <MicOff className="relative h-3.5 w-3.5" />
+                        </span>
+                        Stop
+                      </>
+                    ) : voiceState === 'processing' ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Transcribing…
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-3.5 w-3.5" />
+                        Voice
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleParseTask()}
-                    disabled={!aiInput.trim() || aiState === 'parsing'}
+                    disabled={!aiInput.trim() || aiState === 'parsing' || isVoiceActive}
                     className="flex h-8 items-center gap-1.5 rounded-nav border border-input px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {aiState === 'parsing' ? 'Parsing…' : 'Parse Task'}
+                    {aiState === 'parsing' ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Parsing…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Parse Task
+                      </>
+                    )}
                   </button>
                 </div>
               </>
