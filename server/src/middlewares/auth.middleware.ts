@@ -18,6 +18,18 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction): 
   }
 };
 
+// SSE-specific: EventSource cannot set headers, so accept token from query param
+export const authenticateSse = (req: Request, _res: Response, next: NextFunction): void => {
+  const token = req.query.token as string | undefined;
+  if (!token) return next(new UnauthorizedError('No token provided'));
+  try {
+    req.user = verifyAccessToken(token);
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const authorize =
   (...roles: Role[]) =>
   (req: Request, _res: Response, next: NextFunction): void => {

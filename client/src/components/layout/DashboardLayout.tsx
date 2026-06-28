@@ -40,6 +40,7 @@ export function DashboardLayout() {
     loading: notificationsLoading,
     markAllRead,
     markRead,
+    refetch: refetchNotifications,
   } = useNotifications();
 
   const activeNav = PATH_TO_NAV[location.pathname] ?? 'dashboard';
@@ -82,6 +83,7 @@ export function DashboardLayout() {
           notifications={notifications}
           unreadCount={unreadCount}
           notificationsLoading={notificationsLoading}
+          onNotificationsOpen={() => void refetchNotifications()}
           onMarkAllRead={markAllRead}
           onMarkRead={markRead}
           onNotificationClick={handleNotificationClick}

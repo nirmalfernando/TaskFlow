@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, CheckCheck, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationItem } from './NotificationItem';
@@ -15,6 +15,8 @@ export interface NotificationPanelProps {
   onMarkAllRead: () => void;
   onMarkRead: (id: string) => void;
   onNotificationClick?: (notification: AppNotification) => void;
+  /** Screen coords of the anchor element — used to position the portal panel */
+  anchorStyle?: { top: number; right: number };
   className?: string;
 }
 
@@ -45,17 +47,17 @@ export function NotificationPanel({
   onMarkAllRead,
   onMarkRead,
   onNotificationClick,
+  anchorStyle,
   className,
 }: NotificationPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
   if (!open) return null;
 
-  return (
+  const panel = (
     <div
-      ref={panelRef}
+      data-notification-panel
+      style={anchorStyle ? { top: anchorStyle.top, right: anchorStyle.right } : undefined}
       className={cn(
-        'absolute right-0 top-[calc(100%+8px)] z-50 w-[360px]',
+        'fixed z-[9999] w-[360px]',
         'overflow-hidden rounded-[16px] border border-border bg-card',
         'shadow-[0px_8px_32px_rgba(0,0,0,0.12)]',
         className,
@@ -119,4 +121,6 @@ export function NotificationPanel({
       )}
     </div>
   );
+
+  return createPortal(panel, document.body);
 }

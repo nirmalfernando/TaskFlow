@@ -3,6 +3,7 @@ import { TaskRepository } from '../repositories/task.repository';
 import { ActivityLogRepository } from '../repositories/activity-log.repository';
 import { buildPaginationMeta, type PaginationMeta } from '../utils/response';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
+import { notifyUsers } from './sse.service';
 import type { JwtPayload } from '../interfaces';
 import type {
   CreateTaskInput,
@@ -44,6 +45,10 @@ export async function createTask(
   await activityRepo.logActivity({ taskId: task.id, userId: actor.userId, action: 'CREATED' });
 
   const full = await taskRepo.findByIdWithRelations(task.id);
+
+  const recipients = [...new Set([actor.userId, input.assignedToId].filter(Boolean) as string[])];
+  notifyUsers(recipients, 'tasks_changed');
+
   return full!;
 }
 
@@ -115,6 +120,16 @@ export async function updateTask(
   await Promise.all(logs);
 
   const updated = await taskRepo.findByIdWithRelations(id);
+
+  const recipients = [
+    ...new Set(
+      [actor.userId, task.createdById, task.assignedToId, input.assignedToId].filter(
+        Boolean,
+      ) as string[],
+    ),
+  ];
+  notifyUsers(recipients, 'tasks_changed');
+
   return updated!;
 }
 
@@ -124,6 +139,11 @@ export async function deleteTask(id: string, actor: JwtPayload): Promise<void> {
 
   await activityRepo.logActivity({ taskId: id, userId: actor.userId, action: 'DELETED' });
   await taskRepo.softDelete(id);
+
+  const recipients = [
+    ...new Set([actor.userId, task.createdById, task.assignedToId].filter(Boolean) as string[]),
+  ];
+  notifyUsers(recipients, 'tasks_changed');
 }
 
 export async function getTaskActivity(

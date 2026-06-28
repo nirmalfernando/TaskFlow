@@ -27,6 +27,7 @@ export interface TopBarProps {
   notifications?: AppNotification[];
   unreadCount?: number;
   notificationsLoading?: boolean;
+  onNotificationsOpen?: () => void;
   onMarkAllRead?: () => void;
   onMarkRead?: (id: string) => void;
   onNotificationClick?: (notification: AppNotification) => void;
@@ -75,6 +76,7 @@ export function TopBar({
   notifications = [],
   unreadCount = 0,
   notificationsLoading = false,
+  onNotificationsOpen,
   onMarkAllRead,
   onMarkRead,
   onNotificationClick,
@@ -83,15 +85,18 @@ export function TopBar({
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
+  const [anchorStyle, setAnchorStyle] = useState<{ top: number; right: number } | undefined>();
   const notifContainerRef = useRef<HTMLDivElement>(null);
   const showSearch = Boolean(onSearch);
 
   useEffect(() => {
     if (!notifOpen) return;
     function handleMouseDown(e: MouseEvent) {
-      if (notifContainerRef.current && !notifContainerRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
+      const target = e.target as Element;
+      const inContainer = notifContainerRef.current?.contains(target);
+      // Portal panel renders at body level — check via data attribute
+      const inPanel = target.closest('[data-notification-panel]') !== null;
+      if (!inContainer && !inPanel) setNotifOpen(false);
     }
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);
@@ -148,7 +153,15 @@ export function TopBar({
         <div className="relative" ref={notifContainerRef}>
           <IconButton
             label="Notifications"
-            onClick={() => setNotifOpen((o) => !o)}
+            onClick={() => {
+              const opening = !notifOpen;
+              if (opening && notifContainerRef.current) {
+                const rect = notifContainerRef.current.getBoundingClientRect();
+                setAnchorStyle({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+              }
+              setNotifOpen(opening);
+              if (opening) onNotificationsOpen?.();
+            }}
             badgeCount={unreadCount}
           >
             <Bell className="h-4 w-4" />
@@ -159,6 +172,7 @@ export function TopBar({
             unreadCount={unreadCount}
             loading={notificationsLoading}
             open={notifOpen}
+            anchorStyle={anchorStyle}
             onClose={() => setNotifOpen(false)}
             onMarkAllRead={() => onMarkAllRead?.()}
             onMarkRead={(id) => onMarkRead?.(id)}

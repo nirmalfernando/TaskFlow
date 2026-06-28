@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { AppNotification, Task } from '@/types';
 import * as taskService from '@/services/task.service';
+import { tokenStorage } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 
 const READ_KEY = 'taskflow_notifications_read';
@@ -100,7 +101,7 @@ export function useNotifications(): UseNotificationsReturn {
     if (!user) return;
     setLoading(true);
     try {
-      const result = await taskService.getTasks({ limit: 200 });
+      const result = await taskService.getTasks({ limit: 100 });
       setTasks(result.data);
     } catch {
       // swallow fetch error; loading state resets in finally
@@ -112,6 +113,19 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     void refetch();
   }, [refetch]);
+
+  // SSE: reconnect whenever user/token changes, refetch on every tasks_changed event
+  useEffect(() => {
+    if (!user) return;
+    const token = tokenStorage.getAccess();
+    if (!token) return;
+
+    const es = new EventSource(`/api/v1/events?token=${encodeURIComponent(token)}`);
+    es.addEventListener('tasks_changed', () => void refetch());
+    // On error (e.g. server restart) EventSource auto-reconnects — no manual handling needed
+
+    return () => es.close();
+  }, [user, refetch]);
 
   const notifications = user ? tasksToNotifications(tasks, user.id, readIds) : [];
 
