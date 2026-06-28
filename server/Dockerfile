@@ -17,6 +17,7 @@ FROM node:22-alpine AS production
 ENV NODE_ENV=production
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+RUN apk add --no-cache openssl
 RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
 
 WORKDIR /app
