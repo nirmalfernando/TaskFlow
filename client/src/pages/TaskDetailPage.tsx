@@ -17,6 +17,8 @@ import { PriorityBadge, type Priority } from '@/components/shared/PriorityBadge'
 import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { RichTextEditor } from '@/components/shared/RichTextEditor';
+import { RichTextContent } from '@/components/shared/RichTextContent';
 import * as taskService from '@/services/task.service';
 import type { Task, ActivityLog, TaskStatusBackend, PriorityBackend } from '@/types';
 
@@ -157,6 +159,7 @@ export function TaskDetailPage() {
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -174,6 +177,13 @@ export function TaskDetailPage() {
     if (!task) return;
     const updated = await taskService.updateTask(task.id, { title });
     setTask(updated);
+  }
+
+  async function handleSaveDescription(description: string) {
+    if (!task) return;
+    const updated = await taskService.updateTask(task.id, { description: description || null });
+    setTask(updated);
+    setEditingDescription(false);
   }
 
   async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -250,13 +260,35 @@ export function TaskDetailPage() {
           <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <EditableTitle value={task.title} onSave={handleSaveTitle} />
 
-            {task.description && (
-              <p className="mt-3 text-sm leading-relaxed text-text-secondary">{task.description}</p>
-            )}
-
-            {!task.description && (
-              <p className="mt-3 text-sm italic text-text-placeholder">No description provided.</p>
-            )}
+            <div className="mt-3">
+              {editingDescription ? (
+                <RichTextEditor
+                  initialValue={task.description ?? ''}
+                  onSave={handleSaveDescription}
+                  onCancel={() => setEditingDescription(false)}
+                />
+              ) : (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setEditingDescription(true)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingDescription(true)}
+                  className={cn(
+                    'group relative rounded-input min-h-[60px] cursor-text px-3 py-2 -mx-3 transition-colors hover:bg-surface',
+                    !task.description && 'flex items-center',
+                  )}
+                >
+                  {task.description ? (
+                    <RichTextContent content={task.description} />
+                  ) : (
+                    <p className="text-sm italic text-text-placeholder">
+                      Click to add a description…
+                    </p>
+                  )}
+                  <Pencil className="absolute right-2 top-2 h-3.5 w-3.5 text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              )}
+            </div>
 
             <div className="mt-4 flex items-center gap-2">
               <PriorityBadge priority={toDisplayPriority(task.priority)} />

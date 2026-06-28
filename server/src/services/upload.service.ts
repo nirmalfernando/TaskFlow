@@ -37,3 +37,29 @@ export async function deleteAvatarFromCloudinary(userId: string): Promise<void> 
   if (!env.CLOUDINARY_CLOUD_NAME) return;
   await cloudinary.uploader.destroy(`taskflow/avatars/user_${userId}`).catch(() => {});
 }
+
+export async function uploadTaskImageToCloudinary(buffer: Buffer): Promise<string> {
+  if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
+    throw new BadRequestError(
+      'Image uploads are not configured on this server. Please add Cloudinary credentials.',
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'taskflow/task-images',
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(new Error(error?.message ?? 'Upload failed'));
+        } else {
+          resolve(result.secure_url);
+        }
+      },
+    );
+
+    uploadStream.end(buffer);
+  });
+}

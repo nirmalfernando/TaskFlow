@@ -2,6 +2,7 @@ import { Router, type IRouter } from 'express';
 import { taskController } from '../controllers/task.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
+import { uploadTaskImage } from '../middlewares/upload.middleware';
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -34,4 +35,8 @@ taskRouter.delete('/:id', (req, res, next) => {
 
 taskRouter.get('/:id/activity', (req, res, next) => {
   taskController.activity(req, res, next).catch(next);
+});
+
+taskRouter.post('/upload-image', uploadTaskImage, (req, res, next) => {
+  taskController.uploadImage(req, res, next).catch(next);
 });

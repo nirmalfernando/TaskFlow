@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PriorityBadge, type Priority } from './PriorityBadge';
 import { StatusBadge, type TaskStatus } from './StatusBadge';
+import { RichTextInput } from './RichTextInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import * as userService from '@/services/user.service';
@@ -680,15 +681,11 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
 
           {/* Description */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-label" htmlFor="task-description">
-              Description
-            </label>
-            <textarea
-              id="task-description"
+            <label className="text-sm font-medium text-text-label">Description</label>
+            <RichTextInput
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add a description..."
-              className="h-[90px] w-full resize-none rounded-input border border-input bg-card px-3.5 py-3 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              onChange={setDescription}
+              placeholder="Add a description…"
             />
           </div>
 
