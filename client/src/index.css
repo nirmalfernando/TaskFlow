@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* primary-light as space-separated RGB for opacity modifier support */
+    --color-primary-light: 239 246 255;
+
+    /* Backgrounds */
+    --color-surface: #f9fafb;
+    --color-card: #ffffff;
+
+    /* Borders & inputs */
+    --color-border: #f3f4f6;
+    --color-input: #e5e7eb;
+
+    /* Text */
+    --color-text-primary: #101828;
+    --color-text-dark: #1e2939;
+    --color-text-muted: #6a7282;
+    --color-text-label: #364153;
+    --color-text-placeholder: #99a1af;
+    --color-text-secondary: #4a5565;
+  }
+
+  .dark {
+    --color-primary-light: 30 58 95;
+
+    --color-surface: #030712;
+    --color-card: #111827;
+
+    --color-border: #1f2937;
+    --color-input: #374151;
+
+    --color-text-primary: #f9fafb;
+    --color-text-dark: #f3f4f6;
+    --color-text-muted: #9ca3af;
+    --color-text-label: #e5e7eb;
+    --color-text-placeholder: #6b7280;
+    --color-text-secondary: #d1d5db;
+  }
+
+  body {
+    @apply bg-surface text-text-primary;
+  }
+}

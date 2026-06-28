@@ -1,0 +1,39 @@
+{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.8.0",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
+    "build": "pnpm --filter server build && pnpm --filter client build",
+    "lint": "pnpm --filter server lint && pnpm --filter client lint",
+    "typecheck": "pnpm --filter server typecheck && pnpm --filter client typecheck",
+    "test": "pnpm --filter server test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "concurrently": "^9.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.5.3"
+  },
+  "lint-staged": {
+    "server/src/**/*.ts": [
+      "pnpm --filter @taskflow/server exec eslint --fix --max-warnings=0",
+      "pnpm exec prettier --write"
+    ],
+    "client/src/**/*.{ts,tsx}": [
+      "pnpm --filter @taskflow/client exec eslint --fix --max-warnings=0",
+      "pnpm exec prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "pnpm exec prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  TESTING
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActivityAction {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNED
+  DELETED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  password     String
+  firstName    String
+  lastName     String
+  role         Role    @default(USER)
+  isActive     Boolean @default(true)
+  avatarUrl    String? @db.Text
+  refreshToken String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdTasks  Task[]        @relation("CreatedBy")
+  assignedTasks Task[]        @relation("AssignedTo")
+  activityLogs  ActivityLog[]
+
+  @@index([email])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?    @db.Text
+  status       TaskStatus @default(OPEN)
+  priority     Priority   @default(MEDIUM)
+  dueDate      DateTime?
+  isDeleted    Boolean    @default(false)
+  createdById  String
+  assignedToId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy    User          @relation("CreatedBy", fields: [createdById], references: [id])
+  assignedTo   User?         @relation("AssignedTo", fields: [assignedToId], references: [id])
+  activityLogs ActivityLog[]
+
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([isDeleted])
+  @@map("tasks")
+}
+
+model ActivityLog {
+  id       String         @id @default(cuid())
+  taskId   String
+  userId   String
+  action   ActivityAction
+  field    String?
+  oldValue String?        @db.Text
+  newValue String?        @db.Text
+
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("activity_logs")
+}
