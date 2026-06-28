@@ -1,40 +1,21 @@
 import { useRef, useState } from 'react';
-import { Camera, Check, Eye, EyeOff, KeyRound, Loader2, User } from 'lucide-react';
+import {
+  Camera,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+  User,
+  Shield,
+  Bell,
+  Palette,
+  ChevronRight,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-type Tab = 'profile' | 'security';
-
-function TabButton({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2 rounded-nav px-3.5 py-2.5 text-sm font-medium transition-colors',
-        active
-          ? 'bg-primary text-white shadow-nav-active'
-          : 'text-text-muted hover:bg-surface hover:text-text-primary',
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+// ─── Shared primitives ─────────────────────────────────────────────────────────
 
 function Field({
   label,
@@ -107,7 +88,6 @@ function AvatarUpload({
   uploading: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dragOver, setDragOver] = useState(false);
 
   function handleFiles(files: FileList | null) {
     const file = files?.[0];
@@ -115,46 +95,29 @@ function AvatarUpload({
   }
 
   return (
-    <div className="flex items-center gap-6">
-      <div className="relative">
+    <div className="flex items-center gap-5">
+      <div className="relative group shrink-0">
         <UserAvatar
           name={name}
           src={avatarSrc ?? undefined}
           size="lg"
-          className="!h-20 !w-20 !text-xl"
+          className="!h-20 !w-20 !text-2xl"
         />
-        {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-            <Loader2 className="h-5 w-5 animate-spin text-white" />
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            handleFiles(e.dataTransfer.files);
-          }}
+        <button
+          type="button"
           onClick={() => inputRef.current?.click()}
-          className={cn(
-            'flex cursor-pointer flex-col items-center gap-1.5 rounded-[12px] border-2 border-dashed px-8 py-4 transition-colors',
-            dragOver
-              ? 'border-primary bg-primary-light'
-              : 'border-border bg-surface hover:border-primary/50 hover:bg-primary-light/30',
-          )}
+          disabled={uploading}
+          className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-all group-hover:bg-black/40 disabled:cursor-not-allowed"
+          aria-label="Upload photo"
         >
-          <Camera className="h-5 w-5 text-text-muted" />
-          <p className="text-xs font-medium text-text-muted">
-            Drop image here or <span className="text-primary">browse</span>
-          </p>
-          <p className="text-[11px] text-text-placeholder">JPEG, PNG, WebP or GIF · max 5 MB</p>
+          {uploading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+          ) : (
+            <Camera className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </button>
+        <div className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-primary shadow-sm pointer-events-none">
+          <Camera className="h-3 w-3 text-white" />
         </div>
         <input
           ref={inputRef}
@@ -164,13 +127,32 @@ function AvatarUpload({
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
+      <div>
+        <p className="text-sm font-medium text-text-primary mb-0.5">Profile photo</p>
+        <p className="text-xs text-text-muted mb-3">JPEG, PNG, WebP · max 5 MB</p>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex h-8 items-center gap-1.5 rounded-nav border border-border bg-card px-3 text-xs font-medium text-text-primary shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-colors hover:bg-surface disabled:opacity-50"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Uploading…
+            </>
+          ) : (
+            'Change photo'
+          )}
+        </button>
+      </div>
     </div>
   );
 }
 
-// ─── Profile Tab ───────────────────────────────────────────────────────────────
+// ─── Profile Section ───────────────────────────────────────────────────────────
 
-function ProfileTab() {
+function ProfileSection() {
   const { user, updateProfile, uploadAvatar } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -214,82 +196,90 @@ function ProfileTab() {
   const isDirty = firstName !== (user?.firstName ?? '') || lastName !== (user?.lastName ?? '');
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Avatar */}
-      <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-        <h3 className="mb-1 text-sm font-semibold text-text-primary">Profile Photo</h3>
-        <p className="mb-4 text-xs text-text-muted">
-          This will be displayed in your sidebar, task assignments, and activity feed.
-        </p>
-        <AvatarUpload
-          name={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
-          avatarSrc={user?.avatarUrl}
-          onFileSelect={(f) => void handleAvatarSelect(f)}
-          uploading={uploading}
-        />
+    <div className="flex flex-col gap-8">
+      {/* Avatar row */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary">Profile photo</h3>
+          <p className="mt-0.5 text-xs text-text-muted">
+            This is your public avatar across TaskFlow.
+          </p>
+        </div>
+        <div className="rounded-card border border-border bg-card p-5">
+          <AvatarUpload
+            name={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
+            avatarSrc={user?.avatarUrl}
+            onFileSelect={(f) => void handleAvatarSelect(f)}
+            uploading={uploading}
+          />
+        </div>
       </div>
 
-      {/* Name + Email */}
-      <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-        <h3 className="mb-1 text-sm font-semibold text-text-primary">Personal Information</h3>
-        <p className="mb-5 text-xs text-text-muted">Update your name shown across the app.</p>
+      {/* Divider */}
+      <div className="h-px bg-border" />
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="First Name" htmlFor="firstName">
-            <TextInput
-              id="firstName"
-              value={firstName}
-              onChange={setFirstName}
-              placeholder="First name"
-            />
-          </Field>
-          <Field label="Last Name" htmlFor="lastName">
-            <TextInput
-              id="lastName"
-              value={lastName}
-              onChange={setLastName}
-              placeholder="Last name"
-            />
-          </Field>
+      {/* Name + email */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary">Personal information</h3>
+          <p className="mt-0.5 text-xs text-text-muted">Update your display name.</p>
         </div>
+        <div className="rounded-card border border-border bg-card p-5 flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="First Name" htmlFor="firstName">
+              <TextInput
+                id="firstName"
+                value={firstName}
+                onChange={setFirstName}
+                placeholder="First name"
+              />
+            </Field>
+            <Field label="Last Name" htmlFor="lastName">
+              <TextInput
+                id="lastName"
+                value={lastName}
+                onChange={setLastName}
+                placeholder="Last name"
+              />
+            </Field>
+          </div>
 
-        <div className="mt-4">
           <Field label="Email Address" htmlFor="email" hint="Email cannot be changed.">
             <TextInput id="email" value={user?.email ?? ''} disabled />
           </Field>
-        </div>
 
-        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <div className="mt-5 flex items-center justify-end gap-2.5">
-          {saved && (
-            <span className="flex items-center gap-1 text-sm text-emerald-600">
-              <Check className="h-4 w-4" />
-              Saved
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={saving || !isDirty}
-            className="flex h-9 items-center gap-1.5 rounded-nav bg-primary px-5 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              'Save Changes'
+          <div className="flex items-center justify-end gap-2.5 pt-1">
+            {saved && (
+              <span className="flex items-center gap-1 text-sm text-emerald-600">
+                <Check className="h-4 w-4" />
+                Saved
+              </span>
             )}
-          </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving || !isDirty}
+              className="flex h-9 items-center gap-1.5 rounded-nav bg-primary px-5 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                'Save changes'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Security Tab ──────────────────────────────────────────────────────────────
+// ─── Security Section ──────────────────────────────────────────────────────────
 
 function PasswordInput({
   id,
@@ -336,7 +326,7 @@ const PASSWORD_RULES = [
   { label: 'One number', test: (p: string) => /[0-9]/.test(p) },
 ];
 
-function SecurityTab() {
+function SecuritySection() {
   const { changePassword } = useAuth();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -370,18 +360,15 @@ function SecurityTab() {
   }
 
   return (
-    <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
-      <div className="mb-1 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#eff6ff]">
-          <KeyRound className="h-4 w-4 text-primary" />
-        </div>
-        <h3 className="text-sm font-semibold text-text-primary">Change Password</h3>
+    <div className="flex flex-col gap-3">
+      <div>
+        <h3 className="text-sm font-semibold text-text-primary">Change password</h3>
+        <p className="mt-0.5 text-xs text-text-muted">
+          Choose a strong password and don&apos;t reuse it for other accounts.
+        </p>
       </div>
-      <p className="mb-5 text-xs text-text-muted">
-        Choose a strong password and don&apos;t reuse it for other accounts.
-      </p>
 
-      <div className="flex flex-col gap-4">
+      <div className="rounded-card border border-border bg-card p-5 flex flex-col gap-4">
         <PasswordInput
           id="currentPassword"
           label="Current Password"
@@ -397,14 +384,13 @@ function SecurityTab() {
           placeholder="Enter new password"
         />
 
-        {/* Password strength checklist */}
         {next.length > 0 && (
           <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 rounded-[10px] bg-surface px-4 py-3">
             {PASSWORD_RULES.map((rule) => (
               <div key={rule.label} className="flex items-center gap-2">
                 <div
                   className={cn(
-                    'h-3.5 w-3.5 rounded-full flex items-center justify-center',
+                    'h-3.5 w-3.5 rounded-full flex items-center justify-center shrink-0',
                     rule.test(next) ? 'bg-emerald-500' : 'bg-border',
                   )}
                 >
@@ -434,7 +420,6 @@ function SecurityTab() {
         {confirm.length > 0 && !passwordsMatch && (
           <p className="text-xs text-red-500">Passwords do not match.</p>
         )}
-
         {error && <p className="text-sm text-red-500">{error}</p>}
 
         <div className="flex items-center justify-end gap-2.5 pt-1">
@@ -456,7 +441,7 @@ function SecurityTab() {
                 Updating…
               </>
             ) : (
-              'Update Password'
+              'Update password'
             )}
           </button>
         </div>
@@ -465,44 +450,262 @@ function SecurityTab() {
   );
 }
 
+// ─── Placeholder sections ──────────────────────────────────────────────────────
+
+function NotificationsSection() {
+  const items = [
+    {
+      label: 'Task assignments',
+      desc: 'When someone assigns a task to you',
+      defaultOn: true,
+    },
+    {
+      label: 'Task comments',
+      desc: 'When someone comments on your tasks',
+      defaultOn: true,
+    },
+    {
+      label: 'Due date reminders',
+      desc: '24 hours before a task is due',
+      defaultOn: false,
+    },
+    {
+      label: 'Status updates',
+      desc: 'When a task you follow changes status',
+      defaultOn: false,
+    },
+  ];
+
+  const [enabled, setEnabled] = useState<Record<string, boolean>>(
+    Object.fromEntries(items.map((i) => [i.label, i.defaultOn])),
+  );
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div>
+        <h3 className="text-sm font-semibold text-text-primary">Notification preferences</h3>
+        <p className="mt-0.5 text-xs text-text-muted">Choose what you get notified about.</p>
+      </div>
+      <div className="rounded-card border border-border bg-card divide-y divide-border">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between px-5 py-4">
+            <div>
+              <p className="text-sm font-medium text-text-primary">{item.label}</p>
+              <p className="text-xs text-text-muted mt-0.5">{item.desc}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEnabled((e) => ({ ...e, [item.label]: !e[item.label] }))}
+              className={cn(
+                'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
+                enabled[item.label] ? 'bg-primary' : 'bg-border',
+              )}
+              role="switch"
+              aria-checked={enabled[item.label]}
+            >
+              <span
+                className={cn(
+                  'pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
+                  enabled[item.label] ? 'translate-x-4' : 'translate-x-0',
+                )}
+              />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AppearanceSection() {
+  const themes = [
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'system', label: 'System' },
+  ] as const;
+
+  const [selected, setSelected] = useState<'light' | 'dark' | 'system'>('light');
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div>
+        <h3 className="text-sm font-semibold text-text-primary">Appearance</h3>
+        <p className="mt-0.5 text-xs text-text-muted">Choose your preferred color theme.</p>
+      </div>
+      <div className="rounded-card border border-border bg-card p-5">
+        <div className="grid grid-cols-3 gap-3">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setSelected(t.id)}
+              className={cn(
+                'relative flex flex-col items-center gap-2.5 rounded-[10px] border-2 p-4 transition-colors',
+                selected === t.id
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border bg-surface hover:border-border/80 hover:bg-surface/80',
+              )}
+            >
+              {/* Mini mockup */}
+              <div
+                className={cn(
+                  'w-full h-14 rounded-md overflow-hidden border border-border/60 flex',
+                  t.id === 'dark' ? 'bg-[#1a1a2e]' : 'bg-white',
+                  t.id === 'system' && 'bg-gradient-to-r from-white to-[#1a1a2e]',
+                )}
+              >
+                <div
+                  className={cn(
+                    'w-8 h-full flex flex-col gap-1 p-1',
+                    t.id === 'dark' ? 'bg-[#111827]' : 'bg-[#f3f4f6]',
+                    t.id === 'system' && 'bg-[#f3f4f6]',
+                  )}
+                >
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        'h-1.5 rounded-full',
+                        t.id === 'dark' ? 'bg-white/20' : 'bg-black/10',
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="flex-1 p-1.5 flex flex-col gap-1">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        'h-1.5 rounded-full',
+                        t.id === 'dark' ? 'bg-white/10' : 'bg-black/5',
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-medium',
+                  selected === t.id ? 'text-primary' : 'text-text-muted',
+                )}
+              >
+                {t.label}
+              </span>
+              {selected === t.id && (
+                <div className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Nav items ─────────────────────────────────────────────────────────────────
+
+type Section = 'profile' | 'security' | 'notifications' | 'appearance';
+
+const NAV_ITEMS: { id: Section; label: string; icon: React.ElementType; desc: string }[] = [
+  { id: 'profile', label: 'Profile', icon: User, desc: 'Name, photo, email' },
+  { id: 'security', label: 'Security', icon: Shield, desc: 'Password & access' },
+  { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Alerts & reminders' },
+  { id: 'appearance', label: 'Appearance', icon: Palette, desc: 'Theme & display' },
+];
+
 // ─── SettingsPage ──────────────────────────────────────────────────────────────
 
 export function SettingsPage() {
-  const [tab, setTab] = useState<Tab>('profile');
+  useAuth();
+  const [active, setActive] = useState<Section>('profile');
+
+  const content: Record<Section, React.ReactNode> = {
+    profile: <ProfileSection />,
+    security: <SecuritySection />,
+    notifications: <NotificationsSection />,
+    appearance: <AppearanceSection />,
+  };
+
+  const activeItem = NAV_ITEMS.find((n) => n.id === active)!;
 
   return (
-    <div className="flex flex-col gap-6 p-8">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">Settings</h1>
-        <p className="mt-1 text-sm text-text-muted">Manage your account profile and security.</p>
-      </div>
-
-      <div className="flex gap-6">
-        {/* Left nav */}
-        <aside className="w-48 shrink-0">
-          <div className="flex flex-col gap-0.5">
-            <TabButton
-              active={tab === 'profile'}
-              onClick={() => setTab('profile')}
-              icon={<User className="h-[18px] w-[18px]" />}
-              label="Profile"
-            />
-            <TabButton
-              active={tab === 'security'}
-              onClick={() => setTab('security')}
-              icon={<KeyRound className="h-[18px] w-[18px]" />}
-              label="Security"
-            />
-          </div>
-        </aside>
-
-        {/* Right content */}
-        <div className="flex-1 min-w-0">
-          {tab === 'profile' && <ProfileTab />}
-          {tab === 'security' && <SecurityTab />}
+    <div className="flex -m-8 min-h-[calc(100%+4rem)]">
+      {/* Left nav */}
+      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
+        <div className="px-5 py-6 border-b border-border">
+          <h1 className="text-base font-semibold text-text-primary">Settings</h1>
+          <p className="mt-0.5 text-xs text-text-muted">Manage your account</p>
         </div>
-      </div>
+
+        <nav className="flex flex-col gap-0.5 p-3 flex-1">
+          {NAV_ITEMS.map(({ id, label, icon: Icon, desc }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActive(id)}
+              className={cn(
+                'group flex w-full items-center gap-3 rounded-nav px-3 py-2.5 text-left transition-colors',
+                active === id
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-text-muted hover:bg-surface hover:text-text-primary',
+              )}
+            >
+              <div
+                className={cn(
+                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] transition-colors',
+                  active === id ? 'bg-primary/10' : 'bg-surface group-hover:bg-border/60',
+                )}
+              >
+                <Icon
+                  className={cn(
+                    'h-4 w-4 transition-colors',
+                    active === id ? 'text-primary' : 'text-text-placeholder',
+                  )}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={cn(
+                    'text-sm font-medium leading-none',
+                    active === id ? 'text-primary' : 'text-text-primary',
+                  )}
+                >
+                  {label}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] text-text-placeholder">{desc}</p>
+              </div>
+              <ChevronRight
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0 transition-opacity',
+                  active === id ? 'opacity-60 text-primary' : 'opacity-0 group-hover:opacity-40',
+                )}
+              />
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Right content */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-2xl px-8 py-8">
+          {/* Section heading */}
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary/10">
+              <activeItem.icon className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold tracking-[-0.3px] text-text-primary">
+                {activeItem.label}
+              </h2>
+              <p className="text-xs text-text-muted">{activeItem.desc}</p>
+            </div>
+          </div>
+
+          {content[active]}
+        </div>
+      </main>
     </div>
   );
 }
