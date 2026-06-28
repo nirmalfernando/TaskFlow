@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { Bell, CheckCheck, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationItem } from './NotificationItem';
@@ -41,24 +41,13 @@ export function NotificationPanel({
   unreadCount,
   loading = false,
   open,
-  onClose,
+  onClose: _onClose,
   onMarkAllRead,
   onMarkRead,
   onNotificationClick,
   className,
 }: NotificationPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open, onClose]);
 
   if (!open) return null;
 

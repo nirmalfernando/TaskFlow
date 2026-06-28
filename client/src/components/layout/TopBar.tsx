@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Search, Moon, Sun, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/shared/UserAvatar';
@@ -83,7 +83,19 @@ export function TopBar({
   const { theme, toggleTheme } = useTheme();
   const [query, setQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
+  const notifContainerRef = useRef<HTMLDivElement>(null);
   const showSearch = Boolean(onSearch);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (notifContainerRef.current && !notifContainerRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [notifOpen]);
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
@@ -130,7 +142,7 @@ export function TopBar({
           )}
         </IconButton>
 
-        <div className="relative">
+        <div className="relative" ref={notifContainerRef}>
           <IconButton
             label="Notifications"
             onClick={() => setNotifOpen((o) => !o)}

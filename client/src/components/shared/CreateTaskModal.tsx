@@ -477,7 +477,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
       <div className="relative z-10 w-full max-w-[540px] rounded-[20px] border border-border bg-card shadow-[0px_24px_64px_rgba(0,0,0,0.15)]">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border px-6 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#dbeafe]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary-light">
             <Plus className="h-[18px] w-[18px] text-primary" />
           </div>
           <h2 className="flex-1 text-base font-semibold text-text-primary">Create New Task</h2>
@@ -493,7 +493,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
 
         {/* AI Task Assistant */}
         <div className="px-6 pt-5">
-          <div className="rounded-[14px] bg-[#eff6ff] p-4">
+          <div className="rounded-[14px] bg-primary-light p-4">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -511,7 +511,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
                   placeholder="Describe your task naturally..."
-                  className="h-[80px] w-full resize-none rounded-[10px] border border-[#bedbff] bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-[80px] w-full resize-none rounded-[10px] border border-input bg-card px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-placeholder outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
                 <div className="mt-3 flex items-center gap-2">
                   <button
@@ -525,7 +525,7 @@ export function CreateTaskModal({ open, onClose, onCreateTask }: CreateTaskModal
                     type="button"
                     onClick={() => void handleParseTask()}
                     disabled={!aiInput.trim() || aiState === 'parsing'}
-                    className="flex h-8 items-center gap-1.5 rounded-nav border border-[#bedbff] px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
+                    className="flex h-8 items-center gap-1.5 rounded-nav border border-input px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary-light disabled:opacity-50"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
                     {aiState === 'parsing' ? 'Parsing…' : 'Parse Task'}
