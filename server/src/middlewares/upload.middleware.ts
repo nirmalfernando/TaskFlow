@@ -16,3 +16,15 @@ export const uploadAvatar: RequestHandler = multer({
     }
   },
 }).single('avatar');
+
+export const uploadTaskImage: RequestHandler = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_SIZE_BYTES },
+  fileFilter(_req, file, cb) {
+    if (!ALLOWED_MIME.includes(file.mimetype)) {
+      cb(new BadRequestError('Only JPEG, PNG, WebP, or GIF images are allowed'));
+    } else {
+      cb(null, true);
+    }
+  },
+}).single('file');

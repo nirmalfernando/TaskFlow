@@ -7,6 +7,33 @@ import { useAuth } from '@/hooks/useAuth';
 
 const READ_KEY = 'taskflow_notifications_read';
 
+export const NOTIF_PREFS_KEY = 'taskflow_notification_prefs';
+export const NOTIF_PREFS_CHANGED_EVENT = 'taskflow:notif_prefs_changed';
+
+export interface NotifPrefs {
+  taskAssignments: boolean;
+  taskComments: boolean;
+  dueDateReminders: boolean;
+  statusUpdates: boolean;
+}
+
+const NOTIF_DEFAULTS: NotifPrefs = {
+  taskAssignments: true,
+  taskComments: true,
+  dueDateReminders: false,
+  statusUpdates: false,
+};
+
+export function getNotifPrefs(): NotifPrefs {
+  try {
+    const raw = localStorage.getItem(NOTIF_PREFS_KEY);
+    if (raw) return { ...NOTIF_DEFAULTS, ...(JSON.parse(raw) as Partial<NotifPrefs>) };
+  } catch {
+    // localStorage unavailable
+  }
+  return { ...NOTIF_DEFAULTS };
+}
+
 function getReadIds(): Set<string> {
   try {
     const raw = localStorage.getItem(READ_KEY);
@@ -39,14 +66,15 @@ function tasksToNotifications(
   tasks: Task[],
   userId: string,
   readIds: Set<string>,
+  prefs: NotifPrefs,
 ): AppNotification[] {
   const notifications: AppNotification[] = [];
 
   for (const task of tasks) {
-    if (task.status === 'DONE') continue;
+    if (task.status === 'COMPLETED') continue;
 
     // Assigned to me
-    if (task.assignedToId === userId) {
+    if (prefs.taskAssignments && task.assignedToId === userId) {
       const id = `assigned:${task.id}`;
       notifications.push({
         id,
@@ -60,7 +88,7 @@ function tasksToNotifications(
     }
 
     // Due today
-    if (task.dueDate && isToday(task.dueDate)) {
+    if (prefs.dueDateReminders && task.dueDate && isToday(task.dueDate)) {
       const id = `due_today:${task.id}`;
       notifications.push({
         id,
@@ -97,6 +125,18 @@ export function useNotifications(): UseNotificationsReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [readIds, setReadIds] = useState<Set<string>>(getReadIds);
+  const [prefs, setPrefs] = useState<NotifPrefs>(getNotifPrefs);
+
+  // Re-read prefs on same-tab toggle and cross-tab storage changes
+  useEffect(() => {
+    const handler = () => setPrefs(getNotifPrefs());
+    window.addEventListener(NOTIF_PREFS_CHANGED_EVENT, handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener(NOTIF_PREFS_CHANGED_EVENT, handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
 
   const refetch = useCallback(async () => {
     if (!user) return;
@@ -129,8 +169,8 @@ export function useNotifications(): UseNotificationsReturn {
   }, [user, refetch]);
 
   const notifications = useMemo(
-    () => (user ? tasksToNotifications(tasks, user.id, readIds) : []),
-    [user, tasks, readIds],
+    () => (user ? tasksToNotifications(tasks, user.id, readIds, prefs) : []),
+    [user, tasks, readIds, prefs],
   );
 
   const unreadCount = notifications.filter((n) => !n.read).length;

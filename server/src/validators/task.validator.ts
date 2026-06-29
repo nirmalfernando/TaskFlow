@@ -3,7 +3,7 @@ import { TaskStatus, Priority } from '@prisma/client';
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(50000).optional(),
   status: z.nativeEnum(TaskStatus).optional(),
   priority: z.nativeEnum(Priority).optional(),
   dueDate: z.string().datetime({ offset: true }).optional(),
@@ -13,7 +13,7 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = z
   .object({
     title: z.string().min(1).max(255).optional(),
-    description: z.string().max(5000).nullable().optional(),
+    description: z.string().max(50000).nullable().optional(),
     status: z.nativeEnum(TaskStatus).optional(),
     priority: z.nativeEnum(Priority).optional(),
     dueDate: z.string().datetime({ offset: true }).nullable().optional(),

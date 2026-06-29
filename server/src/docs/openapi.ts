@@ -108,8 +108,8 @@ export const openApiSpec = {
           },
           status: {
             type: 'string',
-            enum: ['OPEN', 'IN_PROGRESS', 'TESTING', 'DONE'],
-            default: 'OPEN',
+            enum: ['TODO', 'IN_PROGRESS', 'IN_QA', 'COMPLETED'],
+            default: 'TODO',
           },
           priority: {
             type: 'string',
@@ -126,7 +126,7 @@ export const openApiSpec = {
         properties: {
           title: { type: 'string', maxLength: 255 },
           description: { type: 'string', maxLength: 5000, nullable: true },
-          status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'TESTING', 'DONE'] },
+          status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'IN_QA', 'COMPLETED'] },
           priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
           dueDate: { type: 'string', format: 'date-time', nullable: true },
           assignedToId: { type: 'string', nullable: true },
@@ -138,7 +138,7 @@ export const openApiSpec = {
           id: { type: 'string', example: 'clxyz9999' },
           title: { type: 'string', example: 'Design login screen' },
           description: { type: 'string', nullable: true },
-          status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'TESTING', 'DONE'] },
+          status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'IN_QA', 'COMPLETED'] },
           priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
           dueDate: { type: 'string', format: 'date-time', nullable: true },
           isDeleted: { type: 'boolean', example: false },
@@ -413,7 +413,7 @@ export const openApiSpec = {
           {
             name: 'status',
             in: 'query',
-            schema: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'TESTING', 'DONE'] },
+            schema: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'IN_QA', 'COMPLETED'] },
           },
           {
             name: 'priority',

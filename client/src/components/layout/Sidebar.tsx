@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LayoutDashboard, CheckSquare, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Users, Settings, LogOut, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 
@@ -25,6 +25,8 @@ export interface SidebarProps {
   user?: SidebarUser;
   onLogout?: () => void;
   className?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -39,13 +41,23 @@ export const DEFAULT_NAV_ITEMS: SidebarNavItem[] = [
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Logo() {
+function Logo({ onClose }: { onClose?: () => void }) {
   return (
     <div className="flex items-center gap-2.5 px-5 pt-5 pb-2">
       <div className="h-8 w-8 flex-shrink-0 rounded-logo bg-primary flex items-center justify-center shadow-logo">
         <img src="/logo.svg" alt="TaskFlow logo" className="h-[18px] w-[18px]" />
       </div>
       <span className="text-base font-semibold tracking-tight text-text-primary">TaskFlow</span>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="ml-auto lg:hidden flex h-7 w-7 items-center justify-center rounded-nav text-text-placeholder hover:text-text-primary hover:bg-surface transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -127,10 +139,22 @@ export function Sidebar({
   user,
   onLogout,
   className,
+  isOpen,
+  onClose,
 }: SidebarProps) {
   return (
-    <aside className={cn('flex h-full w-64 flex-col border-r border-border bg-card', className)}>
-      <Logo />
+    <aside
+      className={cn(
+        'flex h-full w-64 flex-col border-r border-border bg-card',
+        // Mobile: fixed overlay, slides in/out
+        'fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out',
+        // Desktop: static, always visible
+        'lg:static lg:translate-x-0 lg:z-auto',
+        isOpen ? 'translate-x-0' : '-translate-x-full',
+        className,
+      )}
+    >
+      <Logo onClose={onClose} />
 
       <nav className="flex-1 overflow-y-auto px-3 pt-4 flex flex-col gap-0.5">
         {navItems.map((item) => (

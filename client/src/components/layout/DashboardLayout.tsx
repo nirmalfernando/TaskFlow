@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, Users, Settings } from 'lucide-react';
 import { Sidebar, type SidebarNavItem } from './Sidebar';
@@ -34,6 +35,7 @@ export function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -43,7 +45,10 @@ export function DashboardLayout() {
     refetch: refetchNotifications,
   } = useNotifications();
 
-  const activeNav = PATH_TO_NAV[location.pathname] ?? 'dashboard';
+  const activeNav =
+    PATH_TO_NAV[location.pathname] ??
+    Object.entries(PATH_TO_NAV).find(([path]) => location.pathname.startsWith(path + '/'))?.[1] ??
+    'tasks';
 
   const navItems: SidebarNavItem[] =
     user?.role === 'ADMIN'
@@ -63,10 +68,21 @@ export function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <Sidebar
         navItems={navItems}
         activeNav={activeNav}
-        onNavChange={handleNavChange}
+        onNavChange={(key) => {
+          handleNavChange(key);
+          setSidebarOpen(false);
+        }}
         user={
           user
             ? { name: fullName, role: user.role, avatarSrc: user.avatarUrl ?? undefined }
@@ -75,8 +91,10 @@ export function DashboardLayout() {
         onLogout={() => {
           void logout().then(() => navigate('/login', { replace: true }));
         }}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <TopBar
           user={{ name: fullName, avatarSrc: user?.avatarUrl ?? undefined }}
           onProfileClick={() => navigate('/settings')}
@@ -87,8 +105,9 @@ export function DashboardLayout() {
           onMarkAllRead={markAllRead}
           onMarkRead={markRead}
           onNotificationClick={handleNotificationClick}
+          onMenuToggle={() => setSidebarOpen((o) => !o)}
         />
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

@@ -105,25 +105,25 @@ function PriorityDistributionCard({ tasks }: { tasks: Task[] }) {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: '#3b82f6',
+  TODO: '#3b82f6',
   IN_PROGRESS: '#8b5cf6',
-  TESTING: '#f59e0b',
-  DONE: '#10b981',
+  IN_QA: '#f59e0b',
+  COMPLETED: '#10b981',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Open',
+  TODO: 'To Do',
   IN_PROGRESS: 'In Progress',
-  TESTING: 'Testing',
-  DONE: 'Done',
+  IN_QA: 'In QA',
+  COMPLETED: 'Completed',
 };
 
 function TasksByStatusCard({ tasks }: { tasks: Task[] }) {
   const counts = {
-    OPEN: tasks.filter((t) => t.status === 'OPEN').length,
+    TODO: tasks.filter((t) => t.status === 'TODO').length,
     IN_PROGRESS: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
-    TESTING: tasks.filter((t) => t.status === 'TESTING').length,
-    DONE: tasks.filter((t) => t.status === 'DONE').length,
+    IN_QA: tasks.filter((t) => t.status === 'IN_QA').length,
+    COMPLETED: tasks.filter((t) => t.status === 'COMPLETED').length,
   };
   const total = tasks.length;
 
@@ -216,14 +216,14 @@ export function DashboardPage() {
   }, []);
 
   const total = tasks.length;
-  const open = tasks.filter((t) => t.status === 'OPEN').length;
+  const open = tasks.filter((t) => t.status === 'TODO').length;
   const inProgress = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
-  const done = tasks.filter((t) => t.status === 'DONE').length;
+  const done = tasks.filter((t) => t.status === 'COMPLETED').length;
 
   return (
     <div className="flex flex-col gap-8">
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">
             Welcome back, {firstName} 👋
@@ -235,7 +235,7 @@ export function DashboardPage() {
         <button
           type="button"
           onClick={() => navigate('/tasks?new=1')}
-          className="flex h-9 items-center gap-2 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
+          className="flex h-9 w-fit items-center gap-2 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           New Task
@@ -243,7 +243,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-[15.75px]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[15.75px]">
         <StatCard
           label="Total Tasks"
           value={loading ? '—' : total}
@@ -276,7 +276,7 @@ export function DashboardPage() {
 
       {/* Charts row */}
       {!loading && (
-        <div className="grid grid-cols-2 gap-[15.75px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[15.75px]">
           <PriorityDistributionCard tasks={tasks} />
           <TasksByStatusCard tasks={tasks} />
         </div>

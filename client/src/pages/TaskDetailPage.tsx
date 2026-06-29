@@ -17,17 +17,20 @@ import { PriorityBadge, type Priority } from '@/components/shared/PriorityBadge'
 import { StatusBadge, type TaskStatus } from '@/components/shared/StatusBadge';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { RichTextEditor } from '@/components/shared/RichTextEditor';
+import { RichTextContent } from '@/components/shared/RichTextContent';
+import { toast } from 'sonner';
 import * as taskService from '@/services/task.service';
 import type { Task, ActivityLog, TaskStatusBackend, PriorityBackend } from '@/types';
 
 // ─── Enum mappers ─────────────────────────────────────────────────────────────
 
-function toDisplayStatus(s: TaskStatusBackend): TaskStatus {
-  const map: Record<TaskStatusBackend, TaskStatus> = {
-    OPEN: 'open',
+function toDisplayStatus(s: string): TaskStatus | undefined {
+  const map: Record<string, TaskStatus> = {
+    TODO: 'todo',
     IN_PROGRESS: 'in-progress',
-    TESTING: 'testing',
-    DONE: 'done',
+    IN_QA: 'in-qa',
+    COMPLETED: 'completed',
   };
   return map[s];
 }
@@ -133,11 +136,11 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
 
   return (
     <div className="group flex items-center gap-2">
-      <h1 className="text-xl font-bold text-text-primary">{value}</h1>
+      <h1 className="text-lg sm:text-xl font-bold text-text-primary">{value}</h1>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-text-placeholder hover:text-text-muted"
+        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-text-placeholder hover:text-text-muted"
       >
         <Pencil className="h-4 w-4" />
       </button>
@@ -157,6 +160,7 @@ export function TaskDetailPage() {
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -174,6 +178,13 @@ export function TaskDetailPage() {
     if (!task) return;
     const updated = await taskService.updateTask(task.id, { title });
     setTask(updated);
+  }
+
+  async function handleSaveDescription(description: string) {
+    if (!task) return;
+    const updated = await taskService.updateTask(task.id, { description: description || null });
+    setTask(updated);
+    setEditingDescription(false);
   }
 
   async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -198,8 +209,23 @@ export function TaskDetailPage() {
     try {
       await taskService.deleteTask(task.id);
       navigate('/tasks');
+    } catch (err: unknown) {
+      const axiosMsg =
+        err !== null &&
+        typeof err === 'object' &&
+        'response' in err &&
+        err.response !== null &&
+        typeof err.response === 'object' &&
+        'data' in err.response &&
+        err.response.data !== null &&
+        typeof err.response.data === 'object' &&
+        'message' in err.response.data
+          ? String((err.response.data as { message: string }).message)
+          : null;
+      toast.error(axiosMsg ?? 'Failed to delete task. You may not have permission.');
     } finally {
       setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
@@ -232,7 +258,7 @@ export function TaskDetailPage() {
     : null;
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6">
       {/* Back link */}
       <button
         type="button"
@@ -243,22 +269,44 @@ export function TaskDetailPage() {
         Back to Tasks
       </button>
 
-      <div className="grid grid-cols-[1fr_280px] gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
         {/* Main content */}
         <div className="flex flex-col gap-5">
           {/* Title */}
-          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <EditableTitle value={task.title} onSave={handleSaveTitle} />
 
-            {task.description && (
-              <p className="mt-3 text-sm leading-relaxed text-text-secondary">{task.description}</p>
-            )}
+            <div className="mt-3">
+              {editingDescription ? (
+                <RichTextEditor
+                  initialValue={task.description ?? ''}
+                  onSave={handleSaveDescription}
+                  onCancel={() => setEditingDescription(false)}
+                />
+              ) : (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setEditingDescription(true)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingDescription(true)}
+                  className={cn(
+                    'group relative rounded-input min-h-[60px] cursor-text px-3 py-2 -mx-3 transition-colors hover:bg-surface',
+                    !task.description && 'flex items-center',
+                  )}
+                >
+                  {task.description ? (
+                    <RichTextContent content={task.description} />
+                  ) : (
+                    <p className="text-sm italic text-text-placeholder">
+                      Click to add a description…
+                    </p>
+                  )}
+                  <Pencil className="absolute right-2 top-2 h-3.5 w-3.5 text-text-placeholder opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
+                </div>
+              )}
+            </div>
 
-            {!task.description && (
-              <p className="mt-3 text-sm italic text-text-placeholder">No description provided.</p>
-            )}
-
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <PriorityBadge priority={toDisplayPriority(task.priority)} />
               <StatusBadge status={toDisplayStatus(task.status)} />
               {task.dueDate && (
@@ -271,7 +319,7 @@ export function TaskDetailPage() {
           </div>
 
           {/* Activity */}
-          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Activity</h3>
             {activity.length === 0 ? (
               <p className="text-sm text-text-placeholder">No activity yet.</p>
@@ -318,7 +366,7 @@ export function TaskDetailPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Details */}
-          <div className="rounded-card border border-border bg-card p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Details</h3>
 
             <div className="flex flex-col gap-4">
@@ -333,10 +381,10 @@ export function TaskDetailPage() {
                     onChange={(e) => void handleStatusChange(e)}
                     className="h-9 w-full appearance-none rounded-input border border-input bg-card px-3 pr-8 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                   >
-                    <option value="OPEN">Open</option>
+                    <option value="TODO">To Do</option>
                     <option value="IN_PROGRESS">In Progress</option>
-                    <option value="TESTING">Testing</option>
-                    <option value="DONE">Done</option>
+                    <option value="IN_QA">In QA</option>
+                    <option value="COMPLETED">Completed</option>
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-placeholder" />
                 </div>

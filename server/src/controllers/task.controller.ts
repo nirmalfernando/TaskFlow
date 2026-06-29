@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { BaseController } from './base.controller';
 import * as TaskService from '../services/task.service';
+import * as UploadService from '../services/upload.service';
+import { BadRequestError } from '../utils/errors';
 import type { CreateTaskInput, UpdateTaskInput } from '../validators/task.validator';
 
 class TaskController extends BaseController {
@@ -57,6 +59,16 @@ class TaskController extends BaseController {
     try {
       const logs = await TaskService.getTaskActivity(req.params.id);
       this.ok(res, logs);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async uploadImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.file) throw new BadRequestError('No file provided');
+      const url = await UploadService.uploadTaskImageToCloudinary(req.file.buffer);
+      this.ok(res, { url }, 'Image uploaded successfully');
     } catch (err) {
       next(err);
     }
