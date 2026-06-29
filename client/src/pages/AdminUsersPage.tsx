@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Activity,
   ChevronDown,
@@ -293,22 +294,38 @@ function RowMenu({
   onToggleActive: (u: AdminUser) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
     }
-    if (open) document.addEventListener('mousedown', handler);
+    document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
   function handleToggle() {
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      // dropdown is ~140px tall; flip up if not enough room below
-      setOpenUpward(rect.bottom + 160 > window.innerHeight);
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const menuHeight = 170;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < menuHeight + 8 ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      setMenuStyle({
+        position: 'fixed',
+        top,
+        right: window.innerWidth - rect.right,
+        zIndex: 9999,
+      });
     }
     setOpen((o) => !o);
   }
@@ -316,8 +333,9 @@ function RowMenu({
   const isSelf = user.id === currentUserId;
 
   return (
-    <div ref={ref} className="relative">
+    <div>
       <button
+        ref={btnRef}
         type="button"
         onClick={handleToggle}
         className="flex h-8 w-8 items-center justify-center rounded-nav text-text-placeholder transition-colors hover:bg-surface hover:text-text-muted"
@@ -325,62 +343,63 @@ function RowMenu({
         <MoreHorizontal className="h-4 w-4" />
       </button>
 
-      {open && (
-        <div
-          className={cn(
-            'absolute right-0 z-20 min-w-[170px] rounded-card border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]',
-            openUpward ? 'bottom-9' : 'top-9',
-          )}
-        >
-          {!isSelf && (
-            <>
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.55px] text-text-placeholder">
-                Change Role
-              </p>
-              {(['ADMIN', 'USER'] as Role[]).map((r) => (
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={menuStyle}
+            className="min-w-[170px] rounded-card border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]"
+          >
+            {!isSelf && (
+              <>
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.55px] text-text-placeholder">
+                  Change Role
+                </p>
+                {(['ADMIN', 'USER'] as Role[]).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => {
+                      onRoleChange(user, r);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface',
+                      user.role === r ? 'font-semibold text-primary' : 'text-text-secondary',
+                    )}
+                  >
+                    {r === 'ADMIN' ? (
+                      <Shield className="h-3.5 w-3.5" />
+                    ) : (
+                      <Users className="h-3.5 w-3.5" />
+                    )}
+                    {r === 'ADMIN' ? 'Admin' : 'User'}
+                    {user.role === r && <Check className="ml-auto h-3.5 w-3.5" />}
+                  </button>
+                ))}
+                <div className="my-1.5 border-t border-border" />
                 <button
-                  key={r}
                   type="button"
                   onClick={() => {
-                    onRoleChange(user, r);
+                    onToggleActive(user);
                     setOpen(false);
                   }}
                   className={cn(
                     'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface',
-                    user.role === r ? 'font-semibold text-primary' : 'text-text-secondary',
+                    user.isActive ? 'text-red-500' : 'text-emerald-600',
                   )}
                 >
-                  {r === 'ADMIN' ? (
-                    <Shield className="h-3.5 w-3.5" />
-                  ) : (
-                    <Users className="h-3.5 w-3.5" />
-                  )}
-                  {r === 'ADMIN' ? 'Admin' : 'User'}
-                  {user.role === r && <Check className="ml-auto h-3.5 w-3.5" />}
+                  <Activity className="h-3.5 w-3.5" />
+                  {user.isActive ? 'Deactivate' : 'Reactivate'}
                 </button>
-              ))}
-              <div className="my-1.5 border-t border-border" />
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleActive(user);
-                  setOpen(false);
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface',
-                  user.isActive ? 'text-red-500' : 'text-emerald-600',
-                )}
-              >
-                <Activity className="h-3.5 w-3.5" />
-                {user.isActive ? 'Deactivate' : 'Reactivate'}
-              </button>
-            </>
-          )}
-          {isSelf && (
-            <p className="px-3 py-2 text-xs text-text-placeholder">No actions for your account</p>
-          )}
-        </div>
-      )}
+              </>
+            )}
+            {isSelf && (
+              <p className="px-3 py-2 text-xs text-text-placeholder">No actions for your account</p>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -546,23 +565,25 @@ export function AdminUsersPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full border-collapse">
+          <table className="w-full table-fixed border-collapse">
             <thead>
               <tr className="border-b border-border bg-surface">
                 <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
                   User
                 </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                {/* mobile: 24% | desktop: 18% */}
+                <th className="w-[24%] px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:w-[18%]">
                   Role
                 </th>
-                <th className="hidden px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
+                <th className="hidden w-[18%] px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
                   Joined
                 </th>
-                <th className="hidden px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
+                <th className="hidden w-[16%] px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
                   Status
                 </th>
-                <th className="py-2.5 pl-4 pr-5 text-right text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
-                  Actions
+                {/* mobile: 12% | desktop: 12% */}
+                <th className="w-[12%] py-2.5 pl-4 pr-5 text-right text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  <span className="hidden sm:inline">Actions</span>
                 </th>
               </tr>
             </thead>
@@ -581,16 +602,16 @@ export function AdminUsersPage() {
                     )}
                   >
                     {/* User */}
-                    <td className="w-full max-w-0 py-3.5 pl-5 pr-4">
-                      <div className="flex min-w-0 items-center gap-3">
+                    <td className="max-w-0 py-3.5 pl-5 pr-4">
+                      <div className="flex min-w-0 items-center gap-2.5">
                         <UserAvatar
                           name={fullName}
                           src={user.avatarUrl ?? undefined}
                           size="md"
-                          className="!h-9 !w-9 shrink-0 !text-[13.68px]"
+                          className="!h-7 !w-7 shrink-0 !text-[11px] sm:!h-9 sm:!w-9 sm:!text-[13.68px]"
                         />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
+                        <div className="min-w-0 overflow-hidden">
+                          <div className="flex min-w-0 items-center gap-1.5">
                             <span className="truncate text-sm font-medium text-text-primary">
                               {fullName}
                             </span>
@@ -611,7 +632,7 @@ export function AdminUsersPage() {
                     </td>
 
                     {/* Joined — hidden on mobile */}
-                    <td className="hidden px-4 py-3.5 text-sm text-text-muted sm:table-cell">
+                    <td className="hidden whitespace-nowrap px-4 py-3.5 text-sm text-text-muted sm:table-cell">
                       {formatDate(user.createdAt)}
                     </td>
 
