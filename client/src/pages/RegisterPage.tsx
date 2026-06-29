@@ -138,13 +138,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-8"
-      style={{
-        background:
-          'linear-gradient(148.73deg, #fafbfc 0%, #fcfcfd 16.667%, #fdfefe 33.333%, #fff 50%, #fdfeff 57.143%, #fafcff 64.286%, #f8fbff 71.429%, #f6faff 78.571%, #f4f9ff 85.714%, #f1f7ff 92.857%, #eff6ff 100%)',
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-surface">
       <div className="bg-card border border-border rounded-auth-card shadow-auth-card w-full max-w-[440px] p-[41px]">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-6">
