@@ -293,6 +293,7 @@ function RowMenu({
   onToggleActive: (u: AdminUser) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -303,20 +304,34 @@ function RowMenu({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  function handleToggle() {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      // dropdown is ~140px tall; flip up if not enough room below
+      setOpenUpward(rect.bottom + 160 > window.innerHeight);
+    }
+    setOpen((o) => !o);
+  }
+
   const isSelf = user.id === currentUserId;
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggle}
         className="flex h-8 w-8 items-center justify-center rounded-nav text-text-placeholder transition-colors hover:bg-surface hover:text-text-muted"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-9 z-20 min-w-[170px] rounded-card border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]">
+        <div
+          className={cn(
+            'absolute right-0 z-20 min-w-[170px] rounded-card border border-border bg-card py-1.5 shadow-[0px_8px_24px_rgba(0,0,0,0.1)]',
+            openUpward ? 'bottom-9' : 'top-9',
+          )}
+        >
           {!isSelf && (
             <>
               <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.55px] text-text-placeholder">
@@ -454,8 +469,8 @@ export function AdminUsersPage() {
           </span>
           <button
             type="button"
-            onClick={() => setInviteOpen(true)}
-            className="flex h-9 items-center gap-1.5 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
+            disabled
+            className="flex h-9 cursor-not-allowed items-center gap-1.5 rounded-nav bg-primary/40 px-4 text-sm font-medium text-white/70 shadow-none"
           >
             <UserPlus className="h-4 w-4" />
             Invite User
@@ -518,7 +533,7 @@ export function AdminUsersPage() {
       </div>
 
       {/* Users table */}
-      <div className="overflow-x-auto overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
+      <div className="overflow-x-auto rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-text-placeholder" />
@@ -531,7 +546,7 @@ export function AdminUsersPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full min-w-[560px] border-collapse">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border bg-surface">
                 <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
@@ -540,10 +555,10 @@ export function AdminUsersPage() {
                 <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
                   Role
                 </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                <th className="hidden px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
                   Joined
                 </th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                <th className="hidden px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted sm:table-cell">
                   Status
                 </th>
                 <th className="py-2.5 pl-4 pr-5 text-right text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
@@ -566,26 +581,26 @@ export function AdminUsersPage() {
                     )}
                   >
                     {/* User */}
-                    <td className="py-3.5 pl-5 pr-4">
-                      <div className="flex items-center gap-3">
+                    <td className="w-full max-w-0 py-3.5 pl-5 pr-4">
+                      <div className="flex min-w-0 items-center gap-3">
                         <UserAvatar
                           name={fullName}
                           src={user.avatarUrl ?? undefined}
                           size="md"
-                          className="!h-9 !w-9 !text-[13.68px]"
+                          className="!h-9 !w-9 shrink-0 !text-[13.68px]"
                         />
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-medium text-text-primary">
+                            <span className="truncate text-sm font-medium text-text-primary">
                               {fullName}
                             </span>
                             {isSelf && (
-                              <span className="rounded-full border border-[rgba(190,219,255,0.5)] bg-[#eff6ff] px-[7px] py-[3px] text-[10px] font-semibold text-primary">
+                              <span className="shrink-0 rounded-full border border-[rgba(190,219,255,0.5)] bg-[#eff6ff] px-[7px] py-[3px] text-[10px] font-semibold text-primary">
                                 You
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-text-placeholder">{user.email}</p>
+                          <p className="truncate text-xs text-text-placeholder">{user.email}</p>
                         </div>
                       </div>
                     </td>
@@ -595,13 +610,13 @@ export function AdminUsersPage() {
                       <RoleBadge role={toRoleBadge(user.role)} />
                     </td>
 
-                    {/* Joined */}
-                    <td className="px-4 py-3.5 text-sm text-text-muted">
+                    {/* Joined — hidden on mobile */}
+                    <td className="hidden px-4 py-3.5 text-sm text-text-muted sm:table-cell">
                       {formatDate(user.createdAt)}
                     </td>
 
-                    {/* Status */}
-                    <td className="px-4 py-3.5">
+                    {/* Status — hidden on mobile */}
+                    <td className="hidden px-4 py-3.5 sm:table-cell">
                       <div className="flex items-center gap-1.5">
                         <span
                           className="h-2 w-2 rounded-full"
