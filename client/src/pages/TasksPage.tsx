@@ -5,6 +5,7 @@ import {
   ChevronDown,
   List,
   LayoutGrid,
+  GanttChart,
   Sparkles,
   Plus,
   TriangleAlert,
@@ -21,6 +22,7 @@ import { TaskDetailDrawer } from '@/components/shared/TaskDetailDrawer';
 import { cn } from '@/lib/utils';
 import { useTasks } from '@/hooks/useTasks';
 import type { Task, TaskStatusBackend, PriorityBackend, UpdateTaskPayload } from '@/types';
+import { TaskGanttView } from '@/components/features/tasks/TaskGanttView';
 
 // ─── Enum mappers ─────────────────────────────────────────────────────────────
 
@@ -106,8 +108,8 @@ function ViewToggle({
   view,
   onChange,
 }: {
-  view: 'list' | 'kanban';
-  onChange: (v: 'list' | 'kanban') => void;
+  view: 'list' | 'kanban' | 'gantt';
+  onChange: (v: 'list' | 'kanban' | 'gantt') => void;
 }) {
   return (
     <div className="flex gap-0.5 rounded-nav border border-input bg-card p-0.5">
@@ -134,6 +136,19 @@ function ViewToggle({
         aria-label="Kanban view"
       >
         <LayoutGrid className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('gantt')}
+        className={cn(
+          'flex h-7 w-7 items-center justify-center rounded-[8px] transition-colors',
+          view === 'gantt'
+            ? 'bg-primary text-white'
+            : 'text-text-placeholder hover:text-text-muted',
+        )}
+        aria-label="Gantt view"
+      >
+        <GanttChart className="h-3.5 w-3.5" />
       </button>
     </div>
   );
@@ -565,7 +580,7 @@ const PAGE_SIZE = 8;
 export function TasksPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState<'list' | 'kanban'>('kanban');
+  const [view, setView] = useState<'list' | 'kanban' | 'gantt'>('kanban');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -595,12 +610,13 @@ export function TasksPage() {
   }
 
   const isKanban = view === 'kanban';
+  const isGantt = view === 'gantt';
   const filters = {
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(priorityFilter ? { priority: priorityFilter } : {}),
-    page: isKanban ? 1 : page,
-    limit: isKanban ? 100 : PAGE_SIZE,
+    page: isKanban || isGantt ? 1 : page,
+    limit: isKanban || isGantt ? 100 : PAGE_SIZE,
   };
 
   const { tasks, meta, loading, error, createTask, updateTask } = useTasks(filters);
@@ -742,6 +758,11 @@ export function TasksPage() {
         </>
       )}
 
+      {/* Gantt chart */}
+      {!loading && view === 'gantt' && (
+        <TaskGanttView tasks={tasks} onTaskClick={(id) => setSelectedTaskId(id)} />
+      )}
+
       {/* Table */}
       {!loading && view === 'list' && (
         <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
@@ -840,7 +861,7 @@ export function TasksPage() {
         </div>
       )}
 
-      {/* Pagination (list view only) */}
+      {/* Pagination — list view only */}
       {!loading && view === 'list' && total > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p className="text-sm text-text-muted">

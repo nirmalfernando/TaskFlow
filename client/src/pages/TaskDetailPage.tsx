@@ -136,11 +136,11 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
 
   return (
     <div className="group flex items-center gap-2">
-      <h1 className="text-xl font-bold text-text-primary">{value}</h1>
+      <h1 className="text-lg sm:text-xl font-bold text-text-primary">{value}</h1>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-text-placeholder hover:text-text-muted"
+        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-text-placeholder hover:text-text-muted"
       >
         <Pencil className="h-4 w-4" />
       </button>
@@ -269,11 +269,11 @@ export function TaskDetailPage() {
         Back to Tasks
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
         {/* Main content */}
         <div className="flex flex-col gap-5">
           {/* Title */}
-          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <EditableTitle value={task.title} onSave={handleSaveTitle} />
 
             <div className="mt-3">
@@ -301,12 +301,12 @@ export function TaskDetailPage() {
                       Click to add a description…
                     </p>
                   )}
-                  <Pencil className="absolute right-2 top-2 h-3.5 w-3.5 text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Pencil className="absolute right-2 top-2 h-3.5 w-3.5 text-text-placeholder opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 </div>
               )}
             </div>
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <PriorityBadge priority={toDisplayPriority(task.priority)} />
               <StatusBadge status={toDisplayStatus(task.status)} />
               {task.dueDate && (
@@ -319,7 +319,7 @@ export function TaskDetailPage() {
           </div>
 
           {/* Activity */}
-          <div className="rounded-card border border-border bg-card p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-6 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Activity</h3>
             {activity.length === 0 ? (
               <p className="text-sm text-text-placeholder">No activity yet.</p>
@@ -366,7 +366,7 @@ export function TaskDetailPage() {
         {/* Sidebar */}
         <div className="flex flex-col gap-4">
           {/* Details */}
-          <div className="rounded-card border border-border bg-card p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="rounded-card border border-border bg-card p-4 sm:p-5 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
             <h3 className="mb-4 text-sm font-semibold text-text-primary">Details</h3>
 
             <div className="flex flex-col gap-4">
