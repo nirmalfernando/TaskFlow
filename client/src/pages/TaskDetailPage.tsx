@@ -269,7 +269,7 @@ export function TaskDetailPage() {
         Back to Tasks
       </button>
 
-      <div className="grid grid-cols-[1fr_280px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
         {/* Main content */}
         <div className="flex flex-col gap-5">
           {/* Title */}

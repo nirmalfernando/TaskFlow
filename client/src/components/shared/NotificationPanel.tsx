@@ -57,7 +57,7 @@ export function NotificationPanel({
       data-notification-panel
       style={anchorStyle ? { top: anchorStyle.top, right: anchorStyle.right } : undefined}
       className={cn(
-        'fixed z-[9999] w-[360px]',
+        'fixed z-[9999] w-[min(360px,calc(100vw-1rem))]',
         'overflow-hidden rounded-[16px] border border-border bg-card',
         'shadow-[0px_8px_32px_rgba(0,0,0,0.12)]',
         className,

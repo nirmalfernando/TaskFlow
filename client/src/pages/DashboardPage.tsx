@@ -223,7 +223,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">
             Welcome back, {firstName} 👋
@@ -235,7 +235,7 @@ export function DashboardPage() {
         <button
           type="button"
           onClick={() => navigate('/tasks?new=1')}
-          className="flex h-9 items-center gap-2 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
+          className="flex h-9 w-fit items-center gap-2 rounded-nav bg-primary px-4 text-sm font-medium text-white shadow-[0px_1px_1.5px_rgba(43,127,255,0.2),0px_1px_1px_rgba(43,127,255,0.2)] transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           New Task
@@ -243,7 +243,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-[15.75px]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[15.75px]">
         <StatCard
           label="Total Tasks"
           value={loading ? '—' : total}
@@ -276,7 +276,7 @@ export function DashboardPage() {
 
       {/* Charts row */}
       {!loading && (
-        <div className="grid grid-cols-2 gap-[15.75px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[15.75px]">
           <PriorityDistributionCard tasks={tasks} />
           <TasksByStatusCard tasks={tasks} />
         </div>

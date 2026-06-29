@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Moon, Sun, Bell } from 'lucide-react';
+import { Search, Moon, Sun, Bell, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { useTheme } from '@/hooks/useTheme';
@@ -18,6 +18,7 @@ export interface TopBarProps {
   title?: string;
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
+  onMenuToggle?: () => void;
 
   // Right actions
   user: TopBarUser;
@@ -71,6 +72,7 @@ export function TopBar({
   title,
   searchPlaceholder = 'Search tasks…',
   onSearch,
+  onMenuToggle,
   user,
   onProfileClick,
   notifications = [],
@@ -110,14 +112,24 @@ export function TopBar({
   return (
     <header
       className={cn(
-        'flex h-14 items-center justify-between border-b border-border bg-card px-8',
+        'flex h-14 items-center justify-between border-b border-border bg-card px-4 md:px-8',
         className,
       )}
     >
       {/* Left */}
-      <div className="flex-1">
+      <div className="flex flex-1 items-center gap-3">
+        {onMenuToggle && (
+          <button
+            type="button"
+            onClick={onMenuToggle}
+            aria-label="Toggle menu"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-input border border-input bg-card text-text-muted transition-colors hover:bg-surface hover:text-text-primary lg:hidden"
+          >
+            <Menu className="h-[18px] w-[18px]" />
+          </button>
+        )}
         {showSearch ? (
-          <div className="relative w-64">
+          <div className="relative hidden sm:block w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
             <input
               type="search"
@@ -157,7 +169,11 @@ export function TopBar({
               const opening = !notifOpen;
               if (opening && notifContainerRef.current) {
                 const rect = notifContainerRef.current.getBoundingClientRect();
-                setAnchorStyle({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                const panelWidth = Math.min(360, window.innerWidth - 16);
+                const idealRight = window.innerWidth - rect.right;
+                // clamp so the panel's left edge is always ≥ 8px from the viewport left
+                const safeRight = Math.min(idealRight, window.innerWidth - panelWidth - 8);
+                setAnchorStyle({ top: rect.bottom + 8, right: Math.max(8, safeRight) });
               }
               setNotifOpen(opening);
               if (opening) onNotificationsOpen?.();

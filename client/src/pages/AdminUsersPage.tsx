@@ -438,9 +438,9 @@ export function AdminUsersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-8">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-[-0.6px] text-text-primary">
             User Management
@@ -464,7 +464,7 @@ export function AdminUsersPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="flex items-center gap-4 rounded-card border border-border bg-card p-[17px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#eff6ff]">
             <Users className="h-5 w-5 text-primary" />
@@ -518,7 +518,7 @@ export function AdminUsersPage() {
       </div>
 
       {/* Users table */}
-      <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
+      <div className="overflow-x-auto overflow-hidden rounded-card border border-border bg-card shadow-[0px_1px_4px_rgba(0,0,0,0.06)]">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-text-placeholder" />
@@ -531,7 +531,7 @@ export function AdminUsersPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full border-collapse">
+          <table className="w-full min-w-[560px] border-collapse">
             <thead>
               <tr className="border-b border-border bg-surface">
                 <th className="py-2.5 pl-5 pr-4 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">

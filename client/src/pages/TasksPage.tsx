@@ -438,6 +438,126 @@ function KanbanBoard({
   );
 }
 
+// ─── Mobile Kanban View ───────────────────────────────────────────────────────
+
+function MobileKanbanView({
+  tasks,
+  onAddCard,
+  onCardClick,
+}: {
+  tasks: Task[];
+  onAddCard: () => void;
+  onCardClick: (id: string) => void;
+}) {
+  const [activeStatus, setActiveStatus] = useState<TaskStatusBackend>('TODO');
+
+  const colTasks = tasks.filter((t) => t.status === activeStatus);
+  const activeCol = KANBAN_COLUMNS.find((c) => c.backendStatus === activeStatus)!;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Status tab bar */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {KANBAN_COLUMNS.map((col) => {
+          const count = tasks.filter((t) => t.status === col.backendStatus).length;
+          const active = activeStatus === col.backendStatus;
+          return (
+            <button
+              key={col.backendStatus}
+              type="button"
+              onClick={() => setActiveStatus(col.backendStatus)}
+              className={cn(
+                'flex flex-col items-center gap-0.5 rounded-[10px] border px-2 py-2 text-[11px] font-semibold transition-colors',
+                active
+                  ? 'border-transparent text-white'
+                  : 'border-border bg-card text-text-muted hover:bg-surface',
+              )}
+              style={active ? { backgroundColor: col.color, borderColor: col.color } : undefined}
+            >
+              <span className="truncate w-full text-center leading-tight">{col.label}</span>
+              <span
+                className={cn(
+                  'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold',
+                  active ? 'bg-white/25 text-white' : 'bg-border/60 text-text-placeholder',
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Column header strip */}
+      <div
+        className="flex items-center gap-2 rounded-[10px] px-3 py-2"
+        style={{ backgroundColor: `${activeCol.color}12` }}
+      >
+        <span
+          className="h-2.5 w-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: activeCol.color }}
+        />
+        <span className="text-sm font-semibold" style={{ color: activeCol.color }}>
+          {activeCol.label}
+        </span>
+        <span
+          className="rounded-full px-2 py-0.5 text-[11px] font-bold ml-auto"
+          style={{ backgroundColor: activeCol.badgeBg, color: activeCol.badgeText }}
+        >
+          {colTasks.length}
+        </span>
+      </div>
+
+      {/* Cards */}
+      <div className="flex flex-col gap-2">
+        {colTasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-[12px] border-2 border-dashed border-border/60 py-10">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-text-placeholder">
+              <Plus className="h-4 w-4" />
+            </div>
+            <p className="text-xs text-text-placeholder">No tasks here yet</p>
+          </div>
+        ) : (
+          colTasks.map((task) => {
+            const due = formatDueDate(task.dueDate);
+            const overdue = isOverdue(task.dueDate, task.status);
+            const assigneeName = task.assignedTo
+              ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+              : null;
+            return (
+              <KanbanCard
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                description={task.description ?? undefined}
+                priority={toDisplayPriority(task.priority)}
+                status={activeCol.status}
+                assignee={assigneeName ? { name: assigneeName } : null}
+                dueDate={due ?? ''}
+                isOverdue={overdue}
+                isDragging={false}
+                onDragStart={() => undefined}
+                onDragEnd={() => undefined}
+                onClick={() => onCardClick(task.id)}
+              />
+            );
+          })
+        )}
+      </div>
+
+      {/* Add card */}
+      <button
+        type="button"
+        onClick={onAddCard}
+        className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-border px-3 py-3 text-xs font-medium text-text-placeholder transition-colors hover:bg-surface hover:text-text-muted hover:border-border/80"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add card to {activeCol.label}
+      </button>
+    </div>
+  );
+}
+
 // ─── TasksPage ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 8;
@@ -513,8 +633,8 @@ export function TasksPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        <div className="relative w-[280px]">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-[280px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-placeholder" />
           <input
             type="search"
@@ -555,7 +675,7 @@ export function TasksPage() {
             setModalAiFocus(true);
             setShowModal(true);
           }}
-          className="flex h-9 items-center gap-1.5 rounded-nav border border-[#bedbff] bg-card px-4 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
+          className="hidden sm:flex h-9 items-center gap-1.5 rounded-nav border border-[#bedbff] bg-card px-4 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
         >
           <Sparkles className="h-4 w-4" />
           Create with AI
@@ -599,14 +719,27 @@ export function TasksPage() {
         </div>
       )}
 
-      {/* Kanban board */}
+      {/* Kanban board — mobile: tab view, desktop: full board */}
       {!loading && view === 'kanban' && (
-        <KanbanBoard
-          tasks={tasks}
-          onStatusChange={(id, status) => void handleStatusChange(id, status)}
-          onAddCard={() => setShowModal(true)}
-          onCardClick={(id) => setSelectedTaskId(id)}
-        />
+        <>
+          {/* Mobile/tablet: tab-based single column */}
+          <div className="xl:hidden">
+            <MobileKanbanView
+              tasks={tasks}
+              onAddCard={() => setShowModal(true)}
+              onCardClick={(id) => setSelectedTaskId(id)}
+            />
+          </div>
+          {/* Desktop: 4-column drag-drop board */}
+          <div className="hidden xl:block">
+            <KanbanBoard
+              tasks={tasks}
+              onStatusChange={(id, status) => void handleStatusChange(id, status)}
+              onAddCard={() => setShowModal(true)}
+              onCardClick={(id) => setSelectedTaskId(id)}
+            />
+          </div>
+        </>
       )}
 
       {/* Table */}
@@ -629,10 +762,10 @@ export function TasksPage() {
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
                     Status
                   </th>
-                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  <th className="hidden sm:table-cell px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
                     Assignee
                   </th>
-                  <th className="py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
+                  <th className="hidden sm:table-cell py-2.5 pl-4 pr-5 text-left text-[11px] font-semibold uppercase tracking-[0.55px] text-text-muted">
                     Due Date
                   </th>
                 </tr>
@@ -666,7 +799,7 @@ export function TasksPage() {
                         <StatusBadge status={toDisplayStatus(task.status)} />
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td className="hidden sm:table-cell px-4 py-3.5">
                         {assigneeName ? (
                           <div className="flex items-center gap-2">
                             <UserAvatar
@@ -683,7 +816,7 @@ export function TasksPage() {
                         )}
                       </td>
 
-                      <td className="py-3.5 pl-4 pr-5">
+                      <td className="hidden sm:table-cell py-3.5 pl-4 pr-5">
                         {due ? (
                           <div
                             className={cn(
@@ -709,7 +842,7 @@ export function TasksPage() {
 
       {/* Pagination (list view only) */}
       {!loading && view === 'list' && total > 0 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p className="text-sm text-text-muted">
             Showing{' '}
             <span className="font-medium text-text-label">

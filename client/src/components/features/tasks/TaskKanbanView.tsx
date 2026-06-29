@@ -86,7 +86,7 @@ function KanbanColumn({
 }: ColumnProps) {
   return (
     <div
-      className="flex w-[270px] flex-shrink-0 flex-col"
+      className="flex flex-1 min-w-[200px] flex-col"
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -195,7 +195,7 @@ export function TaskKanbanView({
   }
 
   return (
-    <div className="flex gap-5 overflow-x-auto pb-4">
+    <div className="flex gap-4 pb-4">
       {COLUMNS.map((col) => {
         const colTasks = tasks.filter((t) => t.column === col.id);
         const isDraggingIntoThis =

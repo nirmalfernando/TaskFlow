@@ -227,7 +227,7 @@ function ProfileSection() {
           <p className="mt-0.5 text-xs text-text-muted">Update your display name.</p>
         </div>
         <div className="rounded-card border border-border bg-card p-5 flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="First Name" htmlFor="firstName">
               <TextInput
                 id="firstName"
@@ -388,7 +388,7 @@ function SecuritySection() {
         />
 
         {next.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 rounded-[10px] bg-surface px-4 py-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 rounded-[10px] bg-surface px-4 py-3">
             {PASSWORD_RULES.map((rule) => (
               <div key={rule.label} className="flex items-center gap-2">
                 <div
@@ -666,9 +666,29 @@ export function SettingsPage() {
   const activeItem = NAV_ITEMS.find((n) => n.id === active)!;
 
   return (
-    <div className="flex -m-8 min-h-[calc(100%+4rem)]">
-      {/* Left nav */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
+    <div className="flex flex-col lg:flex-row -m-4 md:-m-6 lg:-m-8 min-h-[calc(100%+2rem)] md:min-h-[calc(100%+3rem)] lg:min-h-[calc(100%+4rem)]">
+      {/* Mobile tab strip */}
+      <div className="flex justify-center overflow-x-auto border-b border-border bg-card lg:hidden">
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActive(id)}
+            className={cn(
+              'flex flex-col items-center gap-1 px-5 py-3 text-[11px] font-medium border-b-2 -mb-px transition-colors',
+              active === id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-muted hover:text-text-primary',
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop left nav */}
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card">
         <div className="px-5 py-6 border-b border-border">
           <h1 className="text-base font-semibold text-text-primary">Settings</h1>
           <p className="mt-0.5 text-xs text-text-muted">Manage your account</p>
@@ -724,7 +744,7 @@ export function SettingsPage() {
 
       {/* Right content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-8 py-8">
+        <div className="mx-auto max-w-2xl px-4 py-6 md:px-6 md:py-7 lg:px-8 lg:py-8">
           {/* Section heading */}
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary/10">
